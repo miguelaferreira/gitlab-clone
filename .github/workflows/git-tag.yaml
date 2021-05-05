@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       tooling_dir: ${{ github.workspace }}/../tooling
+      ssh_dir: /home/runner/.ssh
     steps:
       - name: "Cache tooling"
         uses: actions/cache@v2
@@ -44,12 +45,13 @@ jobs:
           git remote add origin git@github.com:miguelaferreira/gitlab-clone.git
           git config --global user.email "devex.bot@gmail.com"
           git config --global user.name "DevEx Bot"
-          mkdir ~/.ssh
-          echo "${SSH_CONFIG}" > ~/.ssh/config
-          echo "${BOT_DEVEX_SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
-          chmod -R 500 ~/.ssh
+          mkdir ${ssh_dir}
+          echo "${SSH_CONFIG}" > ${ssh_dir}/config
+          echo "${BOT_DEVEX_SSH_PRIVATE_KEY}" > ${ssh_dir}/id_rsa
+          chmod -R 500 ${ssh_dir}
 
-          ls -al ~/.ssh
+          ls -al ${ssh_dir}
+          cat ${ssh_dir}/config
           git remote -v
       - name: "Create tag"
         run: |
@@ -66,4 +68,4 @@ jobs:
           version_file: ${{ steps.bump.outputs.version-file }}
           commit_message: "[skip ci] Increment version from '${{ steps.bump.outputs.version }}' to '${{ steps.bump.outputs.new-version }}'"
       - name: "Clean up"
-        run: sudo rm -rf ~/.ssh
+        run: sudo rm -rf ${ssh_dir}
