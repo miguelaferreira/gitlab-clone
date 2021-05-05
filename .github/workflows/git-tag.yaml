@@ -49,10 +49,6 @@ jobs:
           echo "${ssh_config}" > ${ssh_dir}/config
           echo "${bot_devex_ssh_private_key}" > ${ssh_dir}/id_rsa
           chmod -R 500 ${ssh_dir}
-
-          ls -al ${ssh_dir}
-          cat ${ssh_dir}/config
-          git remote -v
         env:
           ssh_config: ${{ secrets.SSH_CONFIG }}
           bot_devex_ssh_private_key: ${{ secrets.BOT_DEVEX_SSH_PRIVATE_KEY }}
@@ -64,6 +60,7 @@ jobs:
           tag: "v${{ steps.bump.outputs.version }}"
       - name: "Create bump commit"
         run: |
+          git push --set-upstream origin main
           git add ${version_file}
           git commit -m "${commit_message}"
           git push
