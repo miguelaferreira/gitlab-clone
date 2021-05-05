@@ -43,8 +43,10 @@ jobs:
           git config --global url."https://api:${token}@github.com/".insteadOf "https://github.com/"
           git config --global url."https://ssh:${token}@github.com/".insteadOf "ssh://git@github.com/"
           git config --global url."https://git:${token}@github.com/".insteadOf "git@github.com:"
+          git config --global user.email "devex.bot@gmail.com"
+          git config --global user.name "DevEx Bot"
         env:
-          token: ${{ secrets.ACTIONS_PAT }}
+          token: ${{ secrets.BOT_DEVEX_PAT }}
       - name: "Create tag"
         run: |
           git tag "${tag}"
