@@ -49,8 +49,7 @@ jobs:
           echo "${BOT_DEVEX_SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
           chmod 500 ~/.ssh
           chmod 400 ~/.ssh/*
-        env:
-          token: ${{ secrets.BOT_DEVEX_PAT }}
+          ls -al ~/.ssh
       - name: "Create tag"
         run: |
           git tag "${tag}"
