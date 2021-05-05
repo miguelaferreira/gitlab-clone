@@ -46,13 +46,16 @@ jobs:
           git config --global user.email "devex.bot@gmail.com"
           git config --global user.name "DevEx Bot"
           mkdir ${ssh_dir}
-          echo "${SSH_CONFIG}" > ${ssh_dir}/config
-          echo "${BOT_DEVEX_SSH_PRIVATE_KEY}" > ${ssh_dir}/id_rsa
+          echo "${ssh_config}" > ${ssh_dir}/config
+          echo "${bot_devex_ssh_private_key}" > ${ssh_dir}/id_rsa
           chmod -R 500 ${ssh_dir}
 
           ls -al ${ssh_dir}
           cat ${ssh_dir}/config
           git remote -v
+        env:
+          ssh_config: ${{ secrets.SSH_CONFIG }}
+          bot_devex_ssh_private_key: ${{ secrets.BOT_DEVEX_SSH_PRIVATE_KEY }}
       - name: "Create tag"
         run: |
           git tag "${tag}"
