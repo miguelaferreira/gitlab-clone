@@ -12,6 +12,13 @@ jobs:
     steps:
       - name: "Checkout sources"
         uses: actions/checkout@v2
+      - name: "Cache dependencies"
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle
+            ${GITHUB_WORKSPACE}/.gradle
+          key: ${{ runner.os }}-gitlab-clone
       - name: "Install GraalVM"
         uses: DeLaGuardo/setup-graalvm@4.0
         with:
