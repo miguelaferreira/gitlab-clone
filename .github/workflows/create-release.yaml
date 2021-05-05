@@ -63,7 +63,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           path: "artifacts"
-      - name: "Generate sha256 sum"
+      - name: "Prepare release files"
         run: |
           mkdir release
           cd artifacts
@@ -75,15 +75,13 @@ jobs:
         uses: metcalfc/changelog-generator@v0.4.4
         with:
           myToken: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Create Release"
-        id: create_release
-        uses: actions/create-release@v1
+      - name: "Create release"
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ steps.changelog.outputs.changelog }}
+          files: release/*
+          draft: false
+          fail_on_unmatched_files: true
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: ${{ steps.changelog.outputs.changelog }}
-          draft: false
-          prerelease: false
-          files: release/*
