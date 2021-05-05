@@ -29,8 +29,7 @@ jobs:
           java: 'java11'
           arch: 'amd64'
       - name: "[${{ runner.os }}] Install native-image"
-        run: |
-          gu install native-image
+        run: gu install native-image
       - name: "[${{ runner.os }}] Setup SSH"
         run: |
           mkdir -p ~/.ssh
@@ -46,20 +45,13 @@ jobs:
         run: ./gradlew build nativeImage
         env:
           GITLAB_PRIVATE_TOKEN: ${{ secrets.GITLAB_PRIVATE_TOKEN }}
-      - name: "[${{ runner.os }}] Rename binaries"
-        run: |
-          version=${tag_ref/refs\/tags\//}
-          cp build/native-image/application ./gitlab-clone-${version}-${build_os}
-        env:
-          tag_ref: ${{ github.ref }}
-          build_os: ${{ runner.os }}
       - name: "[${{ runner.os }}] Clean up"
         run: sudo rm -rf ~/.ssh
       - name: '[${{ runner.os }}] Upload artifacts'
         uses: actions/upload-artifact@v2
         with:
-          name: native-image-${{ runner.os }}
-          path: ./gitlab-clone-*
+          name: gitlab-clone-${{ runner.os }}
+          path: build/native-image/application
           if-no-files-found: error
 
   create_release:
@@ -67,10 +59,14 @@ jobs:
     needs: build_release
     runs-on: ubuntu-latest
     steps:
-      - name: 'Download all workflow run artifacts'
+      - name: "Download all workflow run artifacts"
         uses: actions/download-artifact@v2
         with:
-          path: 'artifacts'
+          path: "artifacts"
+      - name: "Generate sha256 sum"
+        run: |
+          cd artifacts
+          for file in *; do sha256sum "${file}" >" ${file}.sha256sum"; done
       - name: "Generate changelog"
         id: changelog
         uses: metcalfc/changelog-generator@v0.4.4
