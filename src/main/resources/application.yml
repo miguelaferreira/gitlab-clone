@@ -1,0 +1,7 @@
+micronaut:
+  application:
+    name: gitlabClone
+
+loggers:
+  level:
+    gitlab.clone: info

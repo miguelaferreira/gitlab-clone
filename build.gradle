@@ -1,0 +1,56 @@
+plugins {
+    id("com.github.johnrengelman.shadow") version "6.1.0"
+    id("io.micronaut.application") version "1.4.2"
+}
+
+version = rootProject.file('VERSION').text.trim()
+group = "gitlab.clone"
+
+repositories {
+    mavenCentral()
+}
+
+micronaut {
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+        annotations("gitlab.clone.*")
+    }
+}
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.16'
+    annotationProcessor 'org.projectlombok:lombok:1.18.16'
+
+    annotationProcessor("info.picocli:picocli-codegen")
+    implementation("info.picocli:picocli")
+    implementation("io.micronaut:micronaut-http-client")
+    implementation("io.micronaut:micronaut-runtime")
+    implementation("io.micronaut.picocli:micronaut-picocli")
+    implementation("io.micronaut:micronaut-validation")
+
+
+    implementation 'org.slf4j:slf4j-api:1.7.30'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
+
+    implementation 'io.vavr:vavr:0.10.3'
+
+    implementation 'com.bacoder.jgit:org.eclipse.jgit:3.1.0-201309071158-r'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.16'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.16'
+    testImplementation 'org.assertj:assertj-core:3.11.1'
+}
+
+application {
+    mainClass.set("gitlab.clone.GitlabCloneCommand")
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion("11")
+    targetCompatibility = JavaVersion.toVersion("11")
+}
+
+test {
+    environment "GITLAB_PRIVATE_TOKEN", System.getenv('GITLAB_PRIVATE_TOKEN')
+}

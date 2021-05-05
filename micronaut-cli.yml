@@ -1,0 +1,6 @@
+applicationType: cli
+defaultPackage: gitlab.clone
+testFramework: junit
+sourceLanguage: java
+buildTool: gradle
+features: [app-name, gradle, http-client, java, junit, logback, picocli, picocli-java-application, picocli-junit, readme, shade, yaml]
