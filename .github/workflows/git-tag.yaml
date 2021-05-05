@@ -40,8 +40,8 @@ jobs:
           version_file: VERSION
       - name: "Configure git"
         run: |
-          git config --global url."git@github.com:".insteadOf "https://github.com/"
-          git config --global url."git@github.com:".insteadOf "ssh://git@github.com/"
+          git remote rm origin
+          git remote add origin git@github.com:miguelaferreira/gitlab-clone.git
           git config --global user.email "devex.bot@gmail.com"
           git config --global user.name "DevEx Bot"
           mkdir ~/.ssh
