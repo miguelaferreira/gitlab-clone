@@ -3,7 +3,7 @@ plugins {
     id("io.micronaut.application") version "1.4.2"
 }
 
-version = "0.1"
+version = rootProject.file('VERSION').text.trim()
 group = "gitlab.clone"
 
 repositories {
