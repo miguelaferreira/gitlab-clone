@@ -63,7 +63,7 @@ jobs:
 
   create_release:
     name: "Create release"
-    needs: release
+    needs: build_release
     runs-on: ubuntu-latest
     steps:
       - name: 'Download all workflow run artifacts'
