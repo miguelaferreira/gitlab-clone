@@ -40,11 +40,15 @@ jobs:
           version_file: VERSION
       - name: "Configure git"
         run: |
-          git config --global url."https://api:${token}@github.com/".insteadOf "https://github.com/"
-          git config --global url."https://ssh:${token}@github.com/".insteadOf "ssh://git@github.com/"
-          git config --global url."https://git:${token}@github.com/".insteadOf "git@github.com:"
+          git config --global url."git@github.com:".insteadOf "https://github.com/"
+          git config --global url."git@github.com:".insteadOf "ssh://git@github.com/"
           git config --global user.email "devex.bot@gmail.com"
           git config --global user.name "DevEx Bot"
+          mkdir ~/.ssh
+          echo "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+          echo "${BOT_DEVEX_SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          chmod 500 ~/.ssh
+          chmod 400 ~/.ssh/*
         env:
           token: ${{ secrets.BOT_DEVEX_PAT }}
       - name: "Create tag"
@@ -61,3 +65,5 @@ jobs:
         env:
           version_file: ${{ steps.bump.outputs.version-file }}
           commit_message: "[skip ci] Increment version from '${{ steps.bump.outputs.version }}' to '${{ steps.bump.outputs.new-version }}'"
+      - name: "Clean up"
+        run: sudo rm -rf ~/.ssh

@@ -32,7 +32,7 @@ jobs:
         run: |
           mkdir ~/.ssh
           echo "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
-          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          echo "${BOT_DEVEX_SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
           chmod 500 ~/.ssh
           chmod 400 ~/.ssh/*
         env:
