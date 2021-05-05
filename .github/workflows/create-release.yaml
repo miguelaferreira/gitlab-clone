@@ -65,6 +65,7 @@ jobs:
           path: "artifacts"
       - name: "Generate sha256 sum"
         run: |
+          find artifacts
           cd artifacts
           for file in *; do sha256sum "${file}" >" ${file}.sha256sum"; done
       - name: "Generate changelog"
