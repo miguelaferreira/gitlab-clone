@@ -11,8 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
-    #        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, macos-latest ]
     steps:
       - name: "[${{ runner.os }}] Checkout sources"
         uses: actions/checkout@v2
@@ -66,9 +65,11 @@ jobs:
           path: "artifacts"
       - name: "Generate sha256 sum"
         run: |
-          find artifacts
+          mkdir release
           cd artifacts
-          for file in *; do sha256sum "${file}" >" ${file}.sha256sum"; done
+          for file in */*; do release_name="$(dirname $file)"; cp "${file}" "../release/${release_name}"; done
+          cd ../release
+          for file in *; do sha256sum "${file}" > "${file}.sha256sum"; done
       - name: "Generate changelog"
         id: changelog
         uses: metcalfc/changelog-generator@v0.4.4
@@ -85,5 +86,4 @@ jobs:
           body: ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: false
-          files: |
-            artifacts/git-clone-*
+          files: release/*
