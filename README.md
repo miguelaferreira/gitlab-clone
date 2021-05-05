@@ -1,8 +1,32 @@
+[![Continuous Integration](https://github.com/miguelaferreira/gitlab-clone/actions/workflows/development.yml/badge.svg?branch=main&event=push)](https://github.com/miguelaferreira/gitlab-clone/actions/workflows/development.yml)
+
 ## GitLab Clone
 
-GitLab
+GitLab offers the ability to create groups of repositories and then leverage those groups to manage multiple repositories at one.
+Things like CI/CD, user membership can be defined at the group level and then inherited by all the underlying repositories.
+Furthermore, it's also possible to create relationships between repositories simply by leveraging the group structure.
+For example, one can include git sub-modules and reference them by their relative path.
 
+It's handy, and sometimes needed, to clone the groups of repositories preserving the group structure.
+That is what this tool does.
 
-## Feature http-client documentation
+## Installing
 
-- [Micronaut HTTP Client documentation](https://docs.micronaut.io/latest/guide/index.html#httpClient)
+The `gitlab-clone` tool is built for two operating systems Linux and macOS.
+Each release on this repository provides binaries for these two operating systems.
+To install the tool, download the binary from the latest release, make it executable and place it on a reachable path.
+
+## Usage
+
+```bash
+$ gitlab-clone -h
+Usage: gitlab-clone [-hvV] -g=GROUP [-p=PATH] -t=TOKEN
+A tool to clone an entire GitLab group with all sub-groups and repositories.
+  -g, --group=GROUP   The GitLab group.
+  -h, --help          Show this help message and exit.
+  -p, --path=PATH     The local path where to create the group clone.
+                        Default: .
+  -t, --token=TOKEN   The GitLab private token.
+  -v, --verbose       Print out extra information about what the tool is doing.
+  -V, --version       Print version information and exit.
+```
