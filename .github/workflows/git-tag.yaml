@@ -45,11 +45,12 @@ jobs:
           git config --global user.email "devex.bot@gmail.com"
           git config --global user.name "DevEx Bot"
           mkdir ~/.ssh
-          echo "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+          echo "${SSH_CONFIG}" > ~/.ssh/config
           echo "${BOT_DEVEX_SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
-          chmod 500 ~/.ssh
-          chmod 400 ~/.ssh/*
+          chmod -R 500 ~/.ssh
+
           ls -al ~/.ssh
+          git remote -v
       - name: "Create tag"
         run: |
           git tag "${tag}"
