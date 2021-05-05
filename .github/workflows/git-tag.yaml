@@ -34,7 +34,7 @@ jobs:
         id: bump
         run: |
           version="$(cat ${version_file})"
-          bump.sh "${old_version}" > ${version_file}
+          bump.sh "${version}" > ${version_file}
           echo "::set-output name=version-file::${version_file}"
           echo "::set-output name=version::${version}"
           echo "::set-output name=new-version::$(cat ${version_file})"
