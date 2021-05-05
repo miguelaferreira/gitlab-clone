@@ -18,7 +18,7 @@ jobs:
           path: |
             ~/.gradle
             ${GITHUB_WORKSPACE}/.gradle
-          key: ${{ runner.os }}-gitlab-clone
+          key: ${{ runner.os }}-gitlab-clone-development
       - name: "Install GraalVM"
         uses: DeLaGuardo/setup-graalvm@4.0
         with:
