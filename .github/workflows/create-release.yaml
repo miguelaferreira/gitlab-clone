@@ -1,0 +1,90 @@
+name: "Create Release"
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build_release:
+    name: "Build release"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    steps:
+      - name: "[${{ runner.os }}] Checkout sources"
+        uses: actions/checkout@v2
+      - name: "[${{ runner.os }}] Cache dependencies"
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle
+            ${GITHUB_WORKSPACE}/.gradle
+          key: ${{ matrix.os }}-gitlab-clone-release
+      - name: "[${{ runner.os }}] Install GraalVM"
+        uses: DeLaGuardo/setup-graalvm@4.0
+        with:
+          graalvm: '21.1.0'
+          java: 'java11'
+          arch: 'amd64'
+      - name: "[${{ runner.os }}] Install native-image"
+        run: |
+          gu install native-image
+      - name: "[${{ runner.os }}] Setup SSH"
+        run: |
+          mkdir ~/.ssh
+          echo "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          chmod 500 ~/.ssh
+          chmod 400 ~/.ssh/*
+        env:
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: "[${{ runner.os }}] Gradle build"
+        run: ./gradlew build nativeImage
+        env:
+          GITLAB_PRIVATE_TOKEN: ${{ secrets.GITLAB_PRIVATE_TOKEN }}
+      - name: "[${{ runner.os }}] Rename binaries"
+        run: |
+          version=${tag_ref/refs\/tags\//}
+          cp build/native-image/application ./gitlab-clone-${version}-${build_os}
+        env:
+          tag_ref: ${{ github.ref }}
+          build_os: ${{ runner.os }}
+      - name: "[${{ runner.os }}] Clean up"
+        run: sudo rm -rf ~/.ssh
+      - name: '[${{ runner.os }}] Upload artifacts'
+        uses: actions/upload-artifact@v2
+        with:
+          name: native-image-${{ runner.os }}
+          path: ./gitlab-clone-*
+          if-no-files-found: error
+
+  create_release:
+    name: "Create release"
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Download all workflow run artifacts'
+        uses: actions/download-artifact@v2
+        with:
+          path: 'artifacts'
+      - name: "Generate changelog"
+        id: changelog
+        uses: metcalfc/changelog-generator@v0.4.4
+        with:
+          myToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Create Release"
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/git-clone-*
