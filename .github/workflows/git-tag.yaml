@@ -39,16 +39,26 @@ jobs:
         env:
           version_file: VERSION
       - name: "Create tag"
-        uses: EndBug/add-and-commit@v7.0.0
-        with:
-          message: "Increment version from '${{ steps.bump.outputs.version }}' to '${{ steps.bump.outputs.new-version }}'"
-          tag: "${{ steps.bump.outputs.version }}"
-          push: true
+        run: |
+          git config --global url."https://api:${token}@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://ssh:${token}@github.com/".insteadOf "ssh://git@github.com/"
+          git config --global url."https://git:${token}@github.com/".insteadOf "git@github.com:"
+
+          git tag "${tag}"
+          git push --tags
         env:
-          GITHUB_TOKEN: ${{ secrets.ACTIONS_PAT }}
+          token: ${{ secrets.ACTIONS_PAT }}
+          tag: ${{ steps.bump.outputs.version }}
       - name: "Create bump commit"
-        uses: EndBug/add-and-commit@v7.0.0
-        with:
-          message: "Increment version from '${{ steps.bump.outputs.version }}' to '${{ steps.bump.outputs.new-version }}'"
-          add: ${{ steps.bump.outputs.version-file }}
-          push: true
+        run: |
+          git config --global url."https://api:${token}@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://ssh:${token}@github.com/".insteadOf "ssh://git@github.com/"
+          git config --global url."https://git:${token}@github.com/".insteadOf "git@github.com:"
+
+          git add ${version_file}
+          git commit -m "${commit_message}"
+          git push
+        env:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version_file: ${{ steps.bump.outputs.version-file }}
+          commit_message: "Increment version from '${{ steps.bump.outputs.version }}' to '${{ steps.bump.outputs.new-version }}'"
