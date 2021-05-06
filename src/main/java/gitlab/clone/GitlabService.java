@@ -19,15 +19,17 @@ public class GitlabService {
     public Flowable<GitlabGroup> searchGroups(String privateToken, String search, boolean onlyNameMatches) {
         final Flowable<GitlabGroup> gitlabGroupFlowable = client.searchGroups(privateToken, search, MAX_GROUPS_PER_PAGE);
         if (onlyNameMatches) {
+            log.debug("Looking for group named: {}", search);
             return gitlabGroupFlowable.filter(gitlabGroup -> gitlabGroup.getName().equalsIgnoreCase(search));
         } else {
+            log.debug("Looking for group matching: {}", search);
             return gitlabGroupFlowable;
         }
     }
 
     public Flowable<GitlabProject> getGitlabGroupProjects(String privateToken, GitlabGroup group) {
+        log.debug("Searching for projects in group {}", group.getFullPath());
         final String groupId = group.getId();
-        log.trace("Searching in group {}", group.getFullPath());
         Flowable<GitlabProject> projects = getGroupProjects(privateToken, groupId);
         Flowable<GitlabGroup> subGroups = getSubGroups(privateToken, groupId);
 

@@ -65,13 +65,16 @@ jobs:
           path: "artifacts"
       - name: "Prepare release files"
         run: |
+          version=${tag_ref/refs\/tags\//}
           mkdir release
           cd artifacts
-          for file in */*; do release_name="$(dirname $file)"; cp "${file}" "../release/${release_name}"; done
+          for file in */*; do release_name="$(dirname ${file})"; cp "${file}" "../release/${release_name}-${version}"; done
           cd ../release
           for file in *; do sha256sum "${file}" > "${file}.sha256sum"; done
-          tar czf all-files.tar.gz *
-          sha256sum all-files.tar.gz > all-files.tar.gz.sha256sum
+          tar czf all-files-${version}.tar.gz *
+          sha256sum all-files-${version}.tar.gz > all-files-${version}.tar.gz.sha256sum
+        env:
+          tag_ref: ${{ github.ref }}
       - name: "Generate changelog"
         id: changelog
         uses: metcalfc/changelog-generator@v0.4.4
