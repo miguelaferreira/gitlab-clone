@@ -57,7 +57,6 @@ public class GitlabCloneCommand implements Runnable {
                                                       .map(group -> gitlabService.getGitlabGroupProjects(gitlabToken, group))
                                                       .flatMap(projects -> cloningService.cloneProjects(projects, localPath));
 
-        operations.blockingIterable()
-                  .forEach(git -> log.info("Cloned project {}", git.getRepository().getDirectory().toString()));
+        operations.blockingIterable();
     }
 }

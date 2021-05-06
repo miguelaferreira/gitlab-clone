@@ -16,6 +16,7 @@ import org.eclipse.jgit.transport.SshTransport;
 
 import javax.inject.Singleton;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.FileSystems;
 
 @Slf4j
@@ -37,15 +38,29 @@ public class CloningService {
                            final GitlabProject project = tuple._1;
                            final Try<Git> cloneOperation = tuple._2;
                            final String projectName = project.getNameWithNamespace();
-                           if (cloneOperation.isSuccess()) {
-                               final Git git = cloneOperation.get();
-                               return Option.of(git);
-                           } else {
-                               final String reason = cloneOperation.getCause().getMessage();
-                               log.warn("Not cloning project '{}' because: {}", projectName, reason);
-                               return Option.<Git>none();
-                           }
+                           return cloneOperation.onSuccess(repo -> log.info("Cloned project '{}' to '{}'", projectName, getDirectory(repo)))
+                                                .onFailure(throwable -> logFailedClone(projectName, throwable))
+                                                .recoverWith(throwable -> recoverCloneError(root, project, projectName, throwable))
+                                                .onFailure(throwable -> logFailedSubModulesInit(projectName))
+                                                .toOption();
                        }).filter(Option::isDefined).map(Option::get);
+    }
+
+    private void logFailedSubModulesInit(String projectName) {
+        log.warn("Could not initialize submodules for project '{}'", projectName);
+    }
+
+    private void logFailedClone(String projectName, Throwable throwable) {
+        log.warn("Not cloning project '{}' because: {}", projectName, throwable.getMessage());
+    }
+
+    private String getDirectory(Git repo) {
+        return repo.getRepository().getDirectory().toString();
+    }
+
+    private Try<Git> recoverCloneError(String root, GitlabProject project, String projectName, Throwable throwable) {
+        log.info("Initializing submodules for project '{}'", projectName);
+        return Try.of(() -> initSubmodules(project, root));
     }
 
     protected Git cloneProject(GitlabProject project, String root) throws GitAPIException {
@@ -60,5 +75,13 @@ public class CloningService {
             sshTransport.setSshSessionFactory(sshSessionFactory);
         });
         return cloneCommand.call();
+    }
+
+    protected Git initSubmodules(GitlabProject project, String root) throws GitAPIException, IOException {
+        String pathToRepo = root + FileSystems.getDefault().getSeparator() + project.getPathWithNamespace();
+
+        final Git repo = Git.open(new File(pathToRepo));
+        repo.submoduleInit().call();
+        return repo;
     }
 }
