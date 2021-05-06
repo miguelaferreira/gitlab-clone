@@ -7,7 +7,7 @@ import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.client.annotation.Client;
 import io.reactivex.Flowable;
 
-@Client("https://gitlab.com/api/v4")
+@Client("${gitlab.url}/api/v4")
 public interface GitlabClient {
     String H_PRIVATE_TOKEN = "PRIVATE-TOKEN";
 
