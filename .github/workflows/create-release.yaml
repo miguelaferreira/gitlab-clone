@@ -67,7 +67,7 @@ jobs:
         run: |
           mkdir release
           cd artifacts
-          for file in */*; do release_name="$(dirname $file)"; cp "${file}" "../release/${release_name}"; done
+          for file in */*; do release_name="$(dirname ${file})"; cp "${file}" "../release/${release_name}"; done
           cd ../release
           for file in *; do sha256sum "${file}" > "${file}.sha256sum"; done
           tar czf all-files.tar.gz *
