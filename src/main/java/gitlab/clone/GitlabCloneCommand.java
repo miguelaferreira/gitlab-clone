@@ -26,9 +26,6 @@ public class GitlabCloneCommand implements Runnable {
     @Option(names = {"-g", "--group"}, description = "The GitLab group.", required = true, paramLabel = "GROUP")
     private String gitlabGroupName;
 
-    @Option(names = {"-t", "--token"}, description = "The GitLab private token.", required = true, paramLabel = "TOKEN")
-    private String gitlabToken;
-
     @Option(names = {"-p", "--path"}, description = "The local path where to create the group clone.", paramLabel = "PATH", defaultValue = ".", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
     private String localPath;
 
@@ -39,8 +36,7 @@ public class GitlabCloneCommand implements Runnable {
     @Inject
     LoggingSystem loggingSystem;
 
-
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         PicocliRunner.run(GitlabCloneCommand.class, args);
     }
 
@@ -51,8 +47,8 @@ public class GitlabCloneCommand implements Runnable {
         }
 
         log.info("Cloning group '{}'", gitlabGroupName);
-        final Flowable<Git> operations = gitlabService.searchGroups(gitlabToken, gitlabGroupName, true)
-                                                      .map(group -> gitlabService.getGitlabGroupProjects(gitlabToken, group))
+        final Flowable<Git> operations = gitlabService.searchGroups(gitlabGroupName, true)
+                                                      .map(group -> gitlabService.getGitlabGroupProjects(group))
                                                       .flatMap(projects -> cloningService.cloneProjects(projects, localPath));
 
         // have to consume all elements of iterable for the code to execute

@@ -52,5 +52,5 @@ java {
 }
 
 test {
-    environment "GITLAB_PRIVATE_TOKEN", System.getenv('GITLAB_PRIVATE_TOKEN')
+    environment "GITLAB_TOKEN", System.getenv('GITLAB_TOKEN')
 }
