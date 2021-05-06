@@ -23,7 +23,7 @@ public class GitlabCloneCommandTest {
         System.setOut(new PrintStream(baos));
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
-            String[] args = new String[]{"-v", "-p", cloneDirectory.toPath().toString(), "-g", "gitlab-clone-example", "-t", System.getenv("GITLAB_PRIVATE_TOKEN")};
+            String[] args = new String[]{"-v", "gitlab-clone-example", cloneDirectory.toPath().toString()};
             PicocliRunner.run(GitlabCloneCommand.class, ctx, args);
 
             assertThat(baos.toString()).contains("Cloning group 'gitlab-clone-example'")

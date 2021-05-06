@@ -23,10 +23,20 @@ public class GitlabCloneCommand implements Runnable {
     @Option(names = {"-v", "--verbose"}, description = "Print out extra information about what the tool is doing.")
     private boolean verbose;
 
-    @Option(names = {"-g", "--group"}, description = "The GitLab group.", required = true, paramLabel = "GROUP")
+    @CommandLine.Parameters(
+            index = "0",
+            paramLabel = "GROUP",
+            description = "The GitLab group to clone."
+    )
     private String gitlabGroupName;
 
-    @Option(names = {"-p", "--path"}, description = "The local path where to create the group clone.", paramLabel = "PATH", defaultValue = ".", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+    @CommandLine.Parameters(
+            index = "1",
+            paramLabel = "PATH",
+            description = "The local path where to create the group clone.",
+            defaultValue = ".",
+            showDefaultValue = CommandLine.Help.Visibility.ON_DEMAND
+    )
     private String localPath;
 
     @Inject

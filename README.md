@@ -24,14 +24,12 @@ brew install miguelaferreira/tools/git-clone
 ## Usage
 
 ```bash
-$ gitlab-clone -h
-Usage: gitlab-clone [-hvV] -g=GROUP [-p=PATH] -t=TOKEN
+$ GITLAB_TOKEN="..." gitlab-clone -h
+Usage: gitlab-clone [-hvV] GROUP PATH
 A tool to clone an entire GitLab group with all sub-groups and repositories.
-  -g, --group=GROUP   The GitLab group.
-  -h, --help          Show this help message and exit.
-  -p, --path=PATH     The local path where to create the group clone.
-                        Default: .
-  -t, --token=TOKEN   The GitLab private token.
-  -v, --verbose       Print out extra information about what the tool is doing.
-  -V, --version       Print version information and exit.
+      GROUP       The GitLab group to clone.
+      PATH        The local path where to create the group clone.
+  -h, --help      Show this help message and exit.
+  -v, --verbose   Print out extra information about what the tool is doing.
+  -V, --version   Print version information and exit.
 ```
