@@ -4,4 +4,4 @@ micronaut:
 
 logger:
   levels:
-    gitlab.clone: info
+    gitlab.clone: INFO
