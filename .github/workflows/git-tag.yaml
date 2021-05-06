@@ -12,6 +12,7 @@ jobs:
     env:
       tooling_dir: ${{ github.workspace }}/../tooling
       ssh_dir: /home/runner/.ssh
+    if: "!contains(github.event.head_commit.message, 'Increment version')"
     steps:
       - name: "Cache tooling"
         uses: actions/cache@v2
@@ -66,6 +67,6 @@ jobs:
           git push
         env:
           version_file: ${{ steps.bump.outputs.version-file }}
-          commit_message: "[skip ci] Increment version from '${{ steps.bump.outputs.version }}' to '${{ steps.bump.outputs.new-version }}'"
+          commit_message: "Increment version from '${{ steps.bump.outputs.version }}' to '${{ steps.bump.outputs.new-version }}'"
       - name: "Clean up"
         run: sudo rm -rf ${ssh_dir}
