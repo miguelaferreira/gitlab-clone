@@ -71,6 +71,7 @@ jobs:
           cd ../release
           for file in *; do sha256sum "${file}" > "${file}.sha256sum"; done
           tar czf all-files.tar.gz *
+          sha256sum all-files.tar.gz > all-files.tar.gz.sha256sum
       - name: "Generate changelog"
         id: changelog
         uses: metcalfc/changelog-generator@v0.4.4
