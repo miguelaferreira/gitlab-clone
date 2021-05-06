@@ -33,6 +33,6 @@ class GitlabServiceTest {
         final GitlabGroup group = service.searchGroups(gitlabPrivateToken, GITLAB_GROUP, true).blockingFirst();
         final Flowable<GitlabProject> projects = service.getGitlabGroupProjects(gitlabPrivateToken, group);
 
-        assertThat(projects.blockingIterable()).hasSize(4);
+        assertThat(projects.blockingIterable()).hasSize(5);
     }
 }
