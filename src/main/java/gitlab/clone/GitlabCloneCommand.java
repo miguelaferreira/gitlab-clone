@@ -11,25 +11,63 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import javax.inject.Inject;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 @Slf4j
 @Command(
         name = "gitlab-clone",
-        description = "A tool to clone an entire GitLab group with all sub-groups and repositories.",
-        mixinStandardHelpOptions = true
+        description = "Clone an entire GitLab group with all sub-groups and repositories.",
+        mixinStandardHelpOptions = true,
+        versionProvider = GitlabCloneCommand.AppVersionProvider.class,
+        sortOptions = false,
+        usageHelpAutoWidth = true
 )
 public class GitlabCloneCommand implements Runnable {
 
-    @Option(names = {"-v", "--verbose"}, description = "Print out extra information about what the tool is doing.")
+    @Option(
+            order = 0,
+            names = {"-v", "--verbose"},
+            description = "Print out extra information about what the tool is doing."
+    )
     private boolean verbose;
 
-    @Option(names = {"-g", "--group"}, description = "The GitLab group.", required = true, paramLabel = "GROUP")
+    @Option(
+            order = 1,
+            names = {"-x", "--very-verbose"},
+            description = "Print out even more information about what the tool is doing."
+    )
+    private boolean veryVerbose;
+
+    @Option(
+            order = 2,
+            names = {"--debug"},
+            description = "Sets all loggers to DEBUG level."
+    )
+    private boolean debug;
+
+    @Option(
+            order = 3,
+            names = {"--trace"},
+            description = "Sets all loggers to TRACE level. WARNING: this setting will leak the GitLab token to the logs, use with caution."
+    )
+    private boolean trace;
+
+    @CommandLine.Parameters(
+            index = "0",
+            paramLabel = "GROUP",
+            description = "The GitLab group to clone."
+    )
     private String gitlabGroupName;
 
-    @Option(names = {"-t", "--token"}, description = "The GitLab private token.", required = true, paramLabel = "TOKEN")
-    private String gitlabToken;
-
-    @Option(names = {"-p", "--path"}, description = "The local path where to create the group clone.", paramLabel = "PATH", defaultValue = ".", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+    @CommandLine.Parameters(
+            index = "1",
+            paramLabel = "PATH",
+            description = "The local path where to create the group clone.",
+            defaultValue = ".",
+            showDefaultValue = CommandLine.Help.Visibility.ON_DEMAND
+    )
     private String localPath;
 
     @Inject
@@ -39,20 +77,29 @@ public class GitlabCloneCommand implements Runnable {
     @Inject
     LoggingSystem loggingSystem;
 
-
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         PicocliRunner.run(GitlabCloneCommand.class, args);
     }
 
     @Override
     public void run() {
-        if (verbose) {
+        if (trace) {
+            loggingSystem.setLogLevel("root", LogLevel.TRACE);
+            log.trace("All loggers set to 'TRACE'");
+        } else if (debug) {
+            loggingSystem.setLogLevel("root", LogLevel.DEBUG);
+            log.debug("All loggers set to 'DEBUG'");
+        } else if (veryVerbose) {
+            loggingSystem.setLogLevel("gitlab.clone", LogLevel.TRACE);
+            log.trace("Set 'gitlab.clone' logger to TRACE");
+        } else if (verbose) {
             loggingSystem.setLogLevel("gitlab.clone", LogLevel.DEBUG);
+            log.debug("Set 'gitlab.clone' logger to DEBUG");
         }
 
         log.info("Cloning group '{}'", gitlabGroupName);
-        final Flowable<Git> operations = gitlabService.searchGroups(gitlabToken, gitlabGroupName, true)
-                                                      .map(group -> gitlabService.getGitlabGroupProjects(gitlabToken, group))
+        final Flowable<Git> operations = gitlabService.searchGroups(gitlabGroupName, true)
+                                                      .map(group -> gitlabService.getGitlabGroupProjects(group))
                                                       .flatMap(projects -> cloningService.cloneProjects(projects, localPath));
 
         // have to consume all elements of iterable for the code to execute
@@ -61,4 +108,17 @@ public class GitlabCloneCommand implements Runnable {
 
         log.info("All done");
     }
+
+    static class AppVersionProvider implements CommandLine.IVersionProvider {
+
+        @Override
+        public String[] getVersion() throws Exception {
+            final URI versionFileUri = AppVersionProvider.class.getResource("/VERSION").toURI();
+            String version = new String(Files.readAllBytes(Paths.get(versionFileUri)));
+            return new String[]{
+                    "v" + version
+            };
+        }
+    }
+
 }

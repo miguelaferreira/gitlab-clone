@@ -5,3 +5,6 @@ micronaut:
 logger:
   levels:
     gitlab.clone: INFO
+
+gitlab:
+  url: "https://gitlab.com"

@@ -1,6 +1,5 @@
 package gitlab.clone;
 
-import io.micronaut.context.annotation.Value;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.reactivex.Flowable;
 import org.junit.jupiter.api.Test;
@@ -18,20 +17,17 @@ class GitlabServiceTest {
     @Inject
     private GitlabService service;
 
-    @Value("${gitlab.private.token}")
-    private String gitlabPrivateToken;
-
     @Test
     void searchGroups_nameOnly() {
-        final Flowable<GitlabGroup> groups = service.searchGroups(gitlabPrivateToken, GITLAB_GROUP, true);
+        final Flowable<GitlabGroup> groups = service.searchGroups(GITLAB_GROUP, true);
 
         assertThat(groups.blockingIterable()).hasSize(1);
     }
 
     @Test
     void getGitlabGroupProjects() {
-        final GitlabGroup group = service.searchGroups(gitlabPrivateToken, GITLAB_GROUP, true).blockingFirst();
-        final Flowable<GitlabProject> projects = service.getGitlabGroupProjects(gitlabPrivateToken, group);
+        final GitlabGroup group = service.searchGroups(GITLAB_GROUP, true).blockingFirst();
+        final Flowable<GitlabProject> projects = service.getGitlabGroupProjects(group);
 
         assertThat(projects.blockingIterable()).hasSize(5);
     }
