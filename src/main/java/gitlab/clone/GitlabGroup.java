@@ -1,11 +1,14 @@
 package gitlab.clone;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class GitlabGroup {
     private String id;
     private String name;
     private String path;
+    @JsonProperty("full_path")
+    String fullPath;
 
     @JsonCreator
     public GitlabGroup() {
@@ -33,5 +36,13 @@ public class GitlabGroup {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public String getFullPath() {
+        return fullPath;
+    }
+
+    public void setFullPath(String fullPath) {
+        this.fullPath = fullPath;
     }
 }

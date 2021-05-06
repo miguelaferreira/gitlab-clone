@@ -14,8 +14,14 @@ public interface GitlabClient {
     @Get("/groups{?search,per_page}")
     Flowable<GitlabGroup> searchGroups(@Header(H_PRIVATE_TOKEN) String privateToken, @QueryValue String search, @QueryValue(value = "per_page") int perPage);
 
-    @Get("/groups/{id}/descendant_groups")
-    Flowable<GitlabGroup> groupDescendants(@Header(H_PRIVATE_TOKEN) String privateToken, @PathVariable String id);
+    @Get("/groups/{id}/descendant_groups{?all_available,per_page,page}")
+    Flowable<GitlabGroup> groupDescendants(
+            @Header(H_PRIVATE_TOKEN) String privateToken,
+            @PathVariable String id,
+            @QueryValue(value = "all_available") boolean allAvailable,
+            @QueryValue(value = "per_page") int perPage,
+            @QueryValue int page
+    );
 
     @Get("/groups/{id}/projects")
     Flowable<GitlabProject> groupProjects(@Header(H_PRIVATE_TOKEN) String privateToken, @PathVariable String id);

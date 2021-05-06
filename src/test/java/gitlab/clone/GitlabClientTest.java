@@ -27,7 +27,7 @@ class GitlabClientTest {
 
     @Test
     void groupDescendants() {
-        final Flowable<GitlabGroup> groups = client.groupDescendants(gitlabPrivateToken, "11961707");
+        final Flowable<GitlabGroup> groups = client.groupDescendants(gitlabPrivateToken, "11961707", true, 100, 0);
 
         assertThat(groups.blockingIterable()).hasSize(3);
     }
