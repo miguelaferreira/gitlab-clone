@@ -1,4 +1,5 @@
-[![Continuous Integration](https://github.com/miguelaferreira/gitlab-clone/actions/workflows/development.yml/badge.svg?branch=main&event=push)](https://github.com/miguelaferreira/gitlab-clone/actions/workflows/development.yml)
+[![Continuous Integration](https://github.com/miguelaferreira/gitlab-clone/actions/workflows/development.yml/badge.svg)](https://github.com/miguelaferreira/gitlab-clone/actions/workflows/development.yml)
+[![Continuous Delivery](https://github.com/miguelaferreira/gitlab-clone/actions/workflows/create-release.yaml/badge.svg)](https://github.com/miguelaferreira/gitlab-clone/actions/workflows/create-release.yaml)
 
 ## GitLab Clone
 
