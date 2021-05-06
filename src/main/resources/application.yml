@@ -1,6 +1,6 @@
 micronaut:
   application:
-    name: gitlabClone
+    name: gitlab-clone
 
 loggers:
   level:
