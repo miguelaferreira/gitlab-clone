@@ -18,22 +18,40 @@ import java.nio.file.Paths;
 @Slf4j
 @Command(
         name = "gitlab-clone",
-        description = "A tool to clone an entire GitLab group with all sub-groups and repositories.",
+        description = "Clone an entire GitLab group with all sub-groups and repositories.",
         mixinStandardHelpOptions = true,
-        versionProvider = GitlabCloneCommand.AppVersionProvider.class
+        versionProvider = GitlabCloneCommand.AppVersionProvider.class,
+        sortOptions = false,
+        usageHelpAutoWidth = true
 )
 public class GitlabCloneCommand implements Runnable {
 
-    @Option(names = {"-v", "--verbose"}, description = "Print out extra information about what the tool is doing.")
+    @Option(
+            order = 0,
+            names = {"-v", "--verbose"},
+            description = "Print out extra information about what the tool is doing."
+    )
     private boolean verbose;
 
-    @Option(names = {"-x", "--very-verbose"}, description = "Print out even more information about what the tool is doing.")
+    @Option(
+            order = 1,
+            names = {"-x", "--very-verbose"},
+            description = "Print out even more information about what the tool is doing."
+    )
     private boolean veryVerbose;
 
-    @Option(names = {"--debug"}, description = "Sets all loggers to DEBUG level.")
+    @Option(
+            order = 2,
+            names = {"--debug"},
+            description = "Sets all loggers to DEBUG level."
+    )
     private boolean debug;
 
-    @Option(names = {"--trace"}, description = "Sets all loggers to TRACE level.")
+    @Option(
+            order = 3,
+            names = {"--trace"},
+            description = "Sets all loggers to TRACE level."
+    )
     private boolean trace;
 
     @CommandLine.Parameters(
