@@ -23,13 +23,22 @@ brew install miguelaferreira/tools/git-clone
 
 ## Usage
 
+Both the gitlab url (`GITLAB_URL`) and the private token (`GITLAB_TOKEN`) for accessing GitLab API are read from the environment.
+The GitLab url defaults to [https://gitlab.com](https://gitlab.com) when not defined in the environment.
+For cloning public groups the token needs `read_api` scope and for private groups it needs the `api` scope.
+See GitLab's [Limiting scopes of a personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#limiting-scopes-of-a-personal-access-token)
+for more details on token scopes.
+
 ```bash
 $ GITLAB_TOKEN="..." gitlab-clone -h
-Usage: gitlab-clone [-hvV] GROUP PATH
-A tool to clone an entire GitLab group with all sub-groups and repositories.
-      GROUP       The GitLab group to clone.
-      PATH        The local path where to create the group clone.
-  -h, --help      Show this help message and exit.
-  -v, --verbose   Print out extra information about what the tool is doing.
-  -V, --version   Print version information and exit.
+Usage: gitlab-clone [-hvVx] [--debug] [--trace] GROUP PATH
+Clone an entire GitLab group with all sub-groups and repositories.
+      GROUP            The GitLab group to clone.
+      PATH             The local path where to create the group clone.
+  -h, --help           Show this help message and exit.
+  -V, --version        Print version information and exit.
+  -v, --verbose        Print out extra information about what the tool is doing.
+  -x, --very-verbose   Print out even more information about what the tool is doing.
+      --debug          Sets all loggers to DEBUG level.
+      --trace          Sets all loggers to TRACE level.
 ```
