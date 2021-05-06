@@ -54,6 +54,7 @@ public class CloningService {
         final CloneCommand cloneCommand = Git.cloneRepository();
         cloneCommand.setURI(project.getSshUrlToRepo());
         cloneCommand.setDirectory(new File(pathToClone));
+        cloneCommand.setCloneSubmodules(true);
         cloneCommand.setTransportConfigCallback(transport -> {
             SshTransport sshTransport = (SshTransport) transport;
             sshTransport.setSshSessionFactory(sshSessionFactory);
