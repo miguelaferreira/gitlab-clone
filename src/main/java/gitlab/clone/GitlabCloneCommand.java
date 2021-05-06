@@ -51,12 +51,10 @@ public class GitlabCloneCommand implements Runnable {
         }
 
         log.info("Cloning group '{}'", gitlabGroupName);
-
-        log.debug("Looking for group named: {}", gitlabGroupName);
         final Flowable<Git> operations = gitlabService.searchGroups(gitlabToken, gitlabGroupName, true)
                                                       .map(group -> gitlabService.getGitlabGroupProjects(gitlabToken, group))
                                                       .flatMap(projects -> cloningService.cloneProjects(projects, localPath));
-
         operations.blockingIterable();
+        log.info("All done");
     }
 }

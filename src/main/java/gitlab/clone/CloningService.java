@@ -33,12 +33,14 @@ public class CloningService {
     };
 
     public Flowable<Git> cloneProjects(Flowable<GitlabProject> projects, String root) {
+        log.debug("Cloning projects under directory '{}'", root);
         return projects.map(project -> Tuple.of(project, Try.of(() -> cloneProject(project, root))))
                        .map(tuple -> {
                            final GitlabProject project = tuple._1;
                            final Try<Git> cloneOperation = tuple._2;
                            final String projectName = project.getNameWithNamespace();
-                           return cloneOperation.onSuccess(repo -> log.info("Cloned project '{}' to '{}'", projectName, getDirectory(repo)))
+                           log.info("Project '{}'", projectName);
+                           return cloneOperation.onSuccess(repo -> log.debug("Cloned project '{}' to '{}'", projectName, getDirectory(repo)))
                                                 .onFailure(throwable -> logFailedClone(projectName, throwable))
                                                 .recoverWith(throwable -> recoverCloneError(root, project, projectName, throwable))
                                                 .onFailure(throwable -> logFailedSubModulesInit(projectName))
@@ -47,11 +49,11 @@ public class CloningService {
     }
 
     private void logFailedSubModulesInit(String projectName) {
-        log.warn("Could not initialize submodules for project '{}'", projectName);
+        log.debug("Could not initialize submodules for project '{}'", projectName);
     }
 
     private void logFailedClone(String projectName, Throwable throwable) {
-        log.warn("Not cloning project '{}' because: {}", projectName, throwable.getMessage());
+        log.debug("Not cloning project '{}' because: {}", projectName, throwable.getMessage());
     }
 
     private String getDirectory(Git repo) {
@@ -59,7 +61,7 @@ public class CloningService {
     }
 
     private Try<Git> recoverCloneError(String root, GitlabProject project, String projectName, Throwable throwable) {
-        log.info("Initializing submodules for project '{}'", projectName);
+        log.debug("Initializing submodules for project '{}'", projectName);
         return Try.of(() -> initSubmodules(project, root));
     }
 
