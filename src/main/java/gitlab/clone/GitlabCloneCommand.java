@@ -50,7 +50,7 @@ public class GitlabCloneCommand implements Runnable {
     @Option(
             order = 3,
             names = {"--trace"},
-            description = "Sets all loggers to TRACE level."
+            description = "Sets all loggers to TRACE level. WARNING: this setting will leak the GitLab token to the logs, use with caution."
     )
     private boolean trace;
 
