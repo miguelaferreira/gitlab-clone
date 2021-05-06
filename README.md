@@ -15,7 +15,11 @@ That is what this tool does.
 
 The `gitlab-clone` tool is built for two operating systems Linux and macOS.
 Each release on this repository provides binaries for these two operating systems.
-To install the tool, download the binary from the latest release, make it executable and place it on a reachable path.
+To install the tool, either download the binary from the latest release, make it executable and place it on a reachable path;
+or use `brew`.
+```bash
+brew install miguelaferreira/tools/git-clone
+```
 
 ## Usage
 
