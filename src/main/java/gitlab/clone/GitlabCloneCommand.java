@@ -11,12 +11,16 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import javax.inject.Inject;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 @Slf4j
 @Command(
         name = "gitlab-clone",
         description = "A tool to clone an entire GitLab group with all sub-groups and repositories.",
-        mixinStandardHelpOptions = true
+        mixinStandardHelpOptions = true,
+        versionProvider = GitlabCloneCommand.AppVersionProvider.class
 )
 public class GitlabCloneCommand implements Runnable {
 
@@ -67,4 +71,17 @@ public class GitlabCloneCommand implements Runnable {
 
         log.info("All done");
     }
+
+    static class AppVersionProvider implements CommandLine.IVersionProvider {
+
+        @Override
+        public String[] getVersion() throws Exception {
+            final URI versionFileUri = AppVersionProvider.class.getResource("/VERSION").toURI();
+            String version = new String(Files.readAllBytes(Paths.get(versionFileUri)));
+            return new String[]{
+                    "v" + version
+            };
+        }
+    }
+
 }
