@@ -71,7 +71,7 @@ jobs:
         with:
           myToken: ${{ secrets.GITHUB_TOKEN }}
       - name: "Prepare release files"
-        id: relase-files
+        id: release-files
         run: |
           version=${tag_ref/refs\/tags\//}
 
@@ -99,17 +99,20 @@ jobs:
           cat << EOF >> "${body_file}"
 
           ## Change log
-          ${change_log}
           EOF
 
+          echo "${change_log}" >> "${body_file}"
+
           echo "::set-output name=release-body::$(cat ${body_file})"
+
+          cat ${body_file}
         env:
           tag_ref: ${{ github.ref }}
           change_log: ${{ steps.changelog.outputs.changelog }}
       - name: "Create release"
         uses: softprops/action-gh-release@v1
         with:
-          body: ${{ steps.relase-files.outputs.release-body }}
+          body: ${{ steps.release-files.outputs.release-body }}
           files: release/*
           draft: false
           fail_on_unmatched_files: true
