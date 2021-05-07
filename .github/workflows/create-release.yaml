@@ -92,11 +92,12 @@ jobs:
           ## SHA 256
           EOF
 
-          cd ../release
+          cd release
           for file in *.sha256sum; do echo "- $(cat "${file}")" >> "../${body_file}"; done
           cd ..
 
           cat << EOF >> "${body_file}"
+
           ## Change log
           ${change_log}
           EOF
