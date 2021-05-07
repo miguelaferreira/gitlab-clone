@@ -65,9 +65,17 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           path: "artifacts"
+      - name: "Generate changelog"
+        id: changelog
+        uses: metcalfc/changelog-generator@v0.4.4
+        with:
+          myToken: ${{ secrets.GITHUB_TOKEN }}
       - name: "Prepare release files"
+        id: relase-files
         run: |
           version=${tag_ref/refs\/tags\//}
+
+          # Create sha256sum for each release file
           mkdir release
           cd artifacts
           for file in */*; do release_name="$(dirname ${file})"; cp "${file}" "../release/${release_name}-${version}"; done
@@ -75,17 +83,32 @@ jobs:
           for file in *; do sha256sum "${file}" > "${file}.sha256sum"; done
           tar czf all-files-${version}.tar.gz *
           sha256sum all-files-${version}.tar.gz > all-files-${version}.tar.gz.sha256sum
+          cd ..
+
+          # Create release text
+          body_file="body.txt"
+
+          cat << EOF > "${body_file}"
+          ## SHA 256
+          EOF
+
+          cd ../release
+          for file in *.sha256sum; do echo "- $(cat "${file}")" >> "../${body_file}"; done
+          cd ..
+
+          cat << EOF >> "${body_file}"
+          ## Change log
+          ${change_log}
+          EOF
+
+          echo "::set-output name=release-body::$(cat ${body_file})"
         env:
           tag_ref: ${{ github.ref }}
-      - name: "Generate changelog"
-        id: changelog
-        uses: metcalfc/changelog-generator@v0.4.4
-        with:
-          myToken: ${{ secrets.GITHUB_TOKEN }}
+          change_log: ${{ steps.changelog.outputs.changelog }}
       - name: "Create release"
         uses: softprops/action-gh-release@v1
         with:
-          body: ${{ steps.changelog.outputs.changelog }}
+          body: ${{ steps.relase-files.outputs.release-body }}
           files: release/*
           draft: false
           fail_on_unmatched_files: true
