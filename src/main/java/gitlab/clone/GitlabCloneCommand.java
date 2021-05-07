@@ -18,19 +18,24 @@ import java.nio.file.Paths;
 @Slf4j
 @Command(
         name = "gitlab-clone",
-        description = {
+        headerHeading = "Usage:%n%n",
+        synopsisHeading = "%n",
+        header = {
                 "Clone an entire GitLab group with all sub-groups and repositories.",
-                "\n",
+                "While cloning initialize project git sub-modules (may require two runs due to ordering of projects).",
+                "When a project is already cloned, tries to initialize git sub-modules."
+        },
+        description = {
                 "The GitLab URL and private token are read from the environment, using GITLAB_URL and GITLAB_TOKEN variables.",
                 "GITLAB_URL defaults to 'https://gitlab.com'.",
-                "The token in GITLAB_TOKEN needs 'read_api' scope for public groups and 'api' scope for private groups.",
-                "\n",
-                "Command options and parameters:"
+                "The token in GITLAB_TOKEN needs 'read_api' scope for public groups and 'api' scope for private groups."
         },
         footer = {
-                "\n",
-                "Copyright(c) 2021 - Miguel Ferreira - GitHub/GitLab: @miguelaferreira"
+                "%nCopyright(c) 2021 - Miguel Ferreira - GitHub/GitLab: @miguelaferreira"
         },
+        descriptionHeading = "%nGitLab configuration:%n%n",
+        parameterListHeading = "%nParameters:%n",
+        optionListHeading = "%nOptions:%n",
         mixinStandardHelpOptions = true,
         versionProvider = GitlabCloneCommand.AppVersionProvider.class,
         sortOptions = false,
