@@ -60,6 +60,8 @@ jobs:
     name: "Create release"
     needs: build_release
     runs-on: ubuntu-latest
+    env:
+      release_body_file: "body.txt"
     steps:
       - name: "Download all workflow run artifacts"
         uses: actions/download-artifact@v2
@@ -86,36 +88,39 @@ jobs:
           cd ..
 
           # Create release text
-          body_file="body.txt"
-
-          cat << EOF > "${body_file}"
+          cat <<'EOF' > "${release_body_file}"
           ## SHA 256
           EOF
 
           cd release
-          for file in *.sha256sum; do echo "- $(cat "${file}")" >> "../${body_file}"; done
+          for file in *.sha256sum; do echo "- $(cat "${file}")" >> "../${release_body_file}"; done
           cd ..
 
-          cat << EOF >> "${body_file}"
+          cat <<'EOF' >> "${release_body_file}"
 
           ## Change log
+          ${change_log}
           EOF
 
-          echo "${change_log}" >> "${body_file}"
+          echo "${change_log}" >> "${release_body_file}"
 
-          echo "::set-output name=release-body::$(cat ${body_file})"
-
-          cat ${body_file}
+          echo "==> change_log var contents"
+          echo "${change_log}"
+          echo
+          echo "==> changelog step output"
+          echo "${{ steps.changelog.outputs.changelog }}"
+          echo
+          echo "==> DBEUG body file contents"
+          cat ${release_body_file}
         env:
           tag_ref: ${{ github.ref }}
           change_log: ${{ steps.changelog.outputs.changelog }}
       - name: "Create release"
         uses: softprops/action-gh-release@v1
         with:
-          body: ${{ steps.release-files.outputs.release-body }}
+          body_path: ${{ env.release_body_file }}
           files: release/*
           draft: false
-          fail_on_unmatched_files: true
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
