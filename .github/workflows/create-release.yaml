@@ -101,19 +101,9 @@ jobs:
           cat <<'EOF' >> "${release_body_file}"
 
           ## Change log
-          ${change_log}
           EOF
 
           echo "${change_log}" >> "${release_body_file}"
-
-          echo "==> change_log var contents"
-          echo "${change_log}"
-          echo
-          echo "==> changelog step output"
-          echo "${{ steps.changelog.outputs.changelog }}"
-          echo
-          echo "==> DBEUG body file contents"
-          cat ${release_body_file}
         env:
           tag_ref: ${{ github.ref }}
           change_log: ${{ steps.changelog.outputs.changelog }}
