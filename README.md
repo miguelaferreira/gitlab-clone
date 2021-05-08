@@ -42,3 +42,15 @@ Clone an entire GitLab group with all sub-groups and repositories.
       --debug          Sets all loggers to DEBUG level.
       --trace          Sets all loggers to TRACE level.
 ```
+
+## Development
+
+In order to properly build a native image some configuration needs to be generated from running the app as a jar.
+That configuration is then included as a resource for the application, and the native image builder will load that to
+properly create the single binary.
+That can be done by running the app from jar while setting a JVM agent to collect the configuration.  
+During the app run all functionality should be exercised.
+```
+./gradlew clean build
+java -agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/native-image -jar build/libs/gitlab-clone-*-all.jar ...
+```
