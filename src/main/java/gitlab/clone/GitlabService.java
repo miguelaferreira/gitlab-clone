@@ -1,5 +1,6 @@
 package gitlab.clone;
 
+import io.micronaut.http.client.exceptions.HttpClientException;
 import io.reactivex.Flowable;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,13 +18,18 @@ public class GitlabService {
     }
 
     public Flowable<GitlabGroup> searchGroups(String search, boolean onlyNameMatches) {
-        final Flowable<GitlabGroup> gitlabGroupFlowable = client.searchGroups(search, MAX_GROUPS_PER_PAGE);
-        if (onlyNameMatches) {
-            log.debug("Looking for group named: {}", search);
-            return gitlabGroupFlowable.filter(gitlabGroup -> gitlabGroup.getName().equalsIgnoreCase(search));
-        } else {
-            log.debug("Looking for group matching: {}", search);
-            return gitlabGroupFlowable;
+        try {
+            final Flowable<GitlabGroup> gitlabGroupFlowable = client.searchGroups(search, MAX_GROUPS_PER_PAGE);
+            if (onlyNameMatches) {
+                log.debug("Looking for group named: {}", search);
+                return gitlabGroupFlowable.filter(gitlabGroup -> gitlabGroup.getName().equalsIgnoreCase(search));
+            } else {
+                log.debug("Looking for group matching: {}", search);
+                return gitlabGroupFlowable;
+            }
+        } catch (HttpClientException e) {
+            log.error("GitLab API call failed: {}", e.getMessage());
+            return Flowable.empty();
         }
     }
 
@@ -42,10 +48,15 @@ public class GitlabService {
 
     private Flowable<GitlabGroup> getSubGroups(String groupId, int page) {
         log.trace("Looking for subgroups at page {}", page);
-        final Flowable<GitlabGroup> groups = client.groupDescendants(groupId, true, MAX_GROUPS_PER_PAGE, page);
-        return Flowable.concat(groups, groups.isEmpty()
-                                             .toFlowable()
-                                             .flatMap(isEmpty -> isEmpty ? Flowable.empty() : getSubGroups(groupId, page + 1)));
+        try {
+            final Flowable<GitlabGroup> groups = client.groupDescendants(groupId, true, MAX_GROUPS_PER_PAGE, page);
+            return Flowable.concat(groups, groups.isEmpty()
+                                                 .toFlowable()
+                                                 .flatMap(isEmpty -> isEmpty ? Flowable.empty() : getSubGroups(groupId, page + 1)));
+        } catch (HttpClientException e) {
+            log.error("GitLab API call failed: {}", e.getMessage());
+            return Flowable.empty();
+        }
     }
 
     private GitlabProject logProject(GitlabProject project) {
@@ -54,6 +65,11 @@ public class GitlabService {
     }
 
     private Flowable<GitlabProject> getGroupProjects(String groupId) {
-        return client.groupProjects(groupId).map(this::logProject);
+        try {
+            return client.groupProjects(groupId).map(this::logProject);
+        } catch (HttpClientException e) {
+            log.error("GitLab API call failed: {}", e.getMessage());
+            return Flowable.empty();
+        }
     }
 }

@@ -46,8 +46,12 @@ jobs:
         run: ./gradlew build nativeImage
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
-      - name: "Run native image"
-        run: build/native-image/application
+      - name: "Run and test native image"
+        run: |
+          build/native-image/application gitlab-clone-example tool-test
+          [[ -f  tool-test/gitlab-clone-example/a-project/some-project-sub-module/README.md ]]
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
       - name: "Clean up"
         if: ${{ always() }}
         run: sudo rm -rf ~/.ssh
