@@ -47,6 +47,7 @@ jobs:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
       - name: "[${{ runner.os }}] Run and test native image"
         run: |
+          build/native-image/application -V
           build/native-image/application gitlab-clone-example tool-test
           [[ -f  tool-test/gitlab-clone-example/a-project/some-project-sub-module/README.md ]]
         env:

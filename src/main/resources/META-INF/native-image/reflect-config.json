@@ -4,6 +4,9 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"byte[]"
+},
+{
   "name":"ch.qos.logback.classic.encoder.PatternLayoutEncoder",
   "allPublicMethods":true,
   "methods":[{"name":"<init>","parameterTypes":[] }]
@@ -1172,6 +1175,16 @@
   "name":"java.lang.RuntimePermission"
 },
 {
+  "name":"java.lang.String"
+},
+{
+  "name":"java.lang.String[]"
+},
+{
+  "name":"java.lang.Throwable",
+  "methods":[{"name":"getSuppressed","parameterTypes":[] }]
+},
+{
   "name":"java.lang.management.ManagementFactory",
   "methods":[{"name":"getRuntimeMXBean","parameterTypes":[] }]
 },
@@ -1322,6 +1335,9 @@
   "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
 },
 {
+  "name":"java.util.Date"
+},
+{
   "name":"java.util.PropertyPermission"
 },
 {
@@ -1392,6 +1408,9 @@
     {"name":"publicSelectedKeys", "allowUnsafeAccess":true}, 
     {"name":"selectedKeys", "allowUnsafeAccess":true}
   ]
+},
+{
+  "name":"sun.security.pkcs.SignerInfo[]"
 },
 {
   "name":"sun.security.pkcs12.PKCS12KeyStore",
@@ -1470,6 +1489,9 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"sun.security.util.ObjectIdentifier"
+},
+{
   "name":"sun.security.x509.AuthorityInfoAccessExtension",
   "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
 },
@@ -1484,6 +1506,9 @@
 {
   "name":"sun.security.x509.CRLDistributionPointsExtension",
   "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"sun.security.x509.CertificateExtensions"
 },
 {
   "name":"sun.security.x509.CertificatePoliciesExtension",
