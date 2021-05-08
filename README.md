@@ -29,7 +29,7 @@ For cloning public groups the token needs `read_api` scope and for private group
 See GitLab's [Limiting scopes of a personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#limiting-scopes-of-a-personal-access-token)
 for more details on token scopes.
 
-```bash
+```
 $ gitlab-clone -h
 Usage:
 
@@ -41,9 +41,11 @@ gitlab-clone [-hvVx] [--debug] [--trace] GROUP PATH
 
 GitLab configuration:
 
-The GitLab URL and private token are read from the environment, using GITLAB_URL and GITLAB_TOKEN variables.
+The GitLab URL and private token are read from the environment, using GITLAB_URL and GITLAB_TOKEN
+variables.
 GITLAB_URL defaults to 'https://gitlab.com'.
-The token in GITLAB_TOKEN needs 'read_api' scope for public groups and 'api' scope for private groups.
+The token in GITLAB_TOKEN needs 'read_api' scope for public groups and 'api' scope for private
+groups.
 
 Parameters:
       GROUP            The GitLab group to clone.
@@ -55,7 +57,8 @@ Options:
   -v, --verbose        Print out extra information about what the tool is doing.
   -x, --very-verbose   Print out even more information about what the tool is doing.
       --debug          Sets all loggers to DEBUG level.
-      --trace          Sets all loggers to TRACE level. WARNING: this setting will leak the GitLab token to the logs, use with caution.
+      --trace          Sets all loggers to TRACE level. WARNING: this setting will leak the GitLab
+                         token to the logs, use with caution.
 
 Copyright(c) 2021 - Miguel Ferreira - GitHub/GitLab: @miguelaferreira
 
