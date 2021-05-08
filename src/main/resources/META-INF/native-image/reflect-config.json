@@ -9,6 +9,10 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"ch.qos.logback.classic.pattern.DateConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"ch.qos.logback.classic.pattern.LevelConverter",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -17,7 +21,15 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"ch.qos.logback.classic.pattern.LoggerConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"ch.qos.logback.classic.pattern.MessageConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.pattern.ThreadConverter",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -68,6 +80,18 @@
   "name":"com.fasterxml.jackson.databind.ser.Serializers[]"
 },
 {
+  "name":"com.jcraft.jsch.DHEC256",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.DHEC384",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.DHEC521",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"com.jcraft.jsch.DHG14",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -104,19 +128,15 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.jcraft.jsch.jce.ARCFOUR",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.jcraft.jsch.jce.ARCFOUR128",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.jcraft.jsch.jce.ARCFOUR256",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"com.jcraft.jsch.jce.DH",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.jce.ECDHN",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.jce.HMACSHA1",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -132,11 +152,31 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.jcraft.jsch.jce.SignatureRSA",
+  "name":"com.jcraft.jsch.jce.SHA256",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.jcraft.jsch.jce.TripleDESCBC",
+  "name":"com.jcraft.jsch.jce.SHA384",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.jce.SHA512",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.jce.SignatureECDSA256",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.jce.SignatureECDSA384",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.jce.SignatureECDSA521",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.jce.SignatureRSA",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -144,15 +184,7 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.jcraft.jsch.jcraft.HMACSHA1",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"com.sun.crypto.provider.AESCipher$General",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.sun.crypto.provider.ARCFOURCipher",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -168,10 +200,6 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.sun.crypto.provider.DHKeyFactory",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"com.sun.crypto.provider.DHKeyPairGenerator",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -181,6 +209,10 @@
 },
 {
   "name":"com.sun.crypto.provider.HmacCore$HmacSHA256",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.HmacSHA1",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -211,6 +243,12 @@
   "name":"gitlab.clone.GitlabCloneCommand",
   "allDeclaredFields":true,
   "allDeclaredMethods":true
+},
+{
+  "name":"gitlab.clone.GitlabCloneCommand$AppVersionProvider",
+  "allDeclaredFields":true,
+  "allDeclaredMethods":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"gitlab.clone.GitlabGroup",
@@ -1123,13 +1161,6 @@
   "name":"io.reactivex.Single"
 },
 {
-  "name":"java.io.File",
-  "methods":[
-    {"name":"canExecute","parameterTypes":[] }, 
-    {"name":"setExecutable","parameterTypes":["boolean"] }
-  ]
-},
-{
   "name":"java.io.FilePermission"
 },
 {
@@ -1197,6 +1228,12 @@
 },
 {
   "name":"java.security.SecurityPermission"
+},
+{
+  "name":"java.security.interfaces.ECPrivateKey"
+},
+{
+  "name":"java.security.interfaces.ECPublicKey"
 },
 {
   "name":"java.security.interfaces.RSAPrivateKey"
@@ -1316,6 +1353,22 @@
 },
 {
   "name":"org.eclipse.jgit.lib.CoreConfig$CheckStat",
+  "methods":[{"name":"values","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jgit.lib.CoreConfig$EOL",
+  "methods":[{"name":"values","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jgit.lib.CoreConfig$HideDotFiles",
+  "methods":[{"name":"values","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jgit.lib.CoreConfig$LogRefUpdates",
+  "methods":[{"name":"values","parameterTypes":[] }]
+},
+{
+  "name":"org.eclipse.jgit.lib.CoreConfig$SymLinks",
   "methods":[{"name":"values","parameterTypes":[] }]
 },
 {
