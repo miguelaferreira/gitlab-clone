@@ -101,17 +101,23 @@ public class GitlabCloneCommand implements Runnable {
     @Override
     public void run() {
         if (trace) {
+            LoggerUtils.disableDefaultAppender();
             loggingSystem.setLogLevel("root", LogLevel.TRACE);
             log.trace("All loggers set to 'TRACE'");
         } else if (debug) {
+            LoggerUtils.disableDefaultAppender();
             loggingSystem.setLogLevel("root", LogLevel.DEBUG);
             log.debug("All loggers set to 'DEBUG'");
         } else if (veryVerbose) {
+            LoggerUtils.disableFullAppender();
             loggingSystem.setLogLevel("gitlab.clone", LogLevel.TRACE);
             log.trace("Set 'gitlab.clone' logger to TRACE");
         } else if (verbose) {
+            LoggerUtils.disableFullAppender();
             loggingSystem.setLogLevel("gitlab.clone", LogLevel.DEBUG);
             log.debug("Set 'gitlab.clone' logger to DEBUG");
+        } else {
+            LoggerUtils.disableFullAppender();
         }
 
         log.info("Cloning group '{}'", gitlabGroupName);
