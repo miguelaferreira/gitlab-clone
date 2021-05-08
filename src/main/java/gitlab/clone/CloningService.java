@@ -23,12 +23,14 @@ import java.nio.file.FileSystems;
 @Singleton
 public class CloningService {
 
-    private final SshSessionFactory sshSessionFactory = new JschConfigSessionFactory() {
+    public static final SshSessionFactory SSH_SESSION_FACTORY = new JschConfigSessionFactory() {
         @Override
         protected void configure(OpenSshConfig.Host host, Session session) {
-            java.util.Properties config = new java.util.Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
+            log.trace("ssh :: host = {}", host.getHostName());
+            log.trace("ssh :: port = {}", host.getPort());
+            log.trace("ssh :: preferred auth = {}", host.getPreferredAuthentications());
+            log.trace("ssh :: strict host key checking = {}", host.getStrictHostKeyChecking());
+            log.trace("ssh :: username = {}", session.getUserName());
         }
     };
 
@@ -74,8 +76,9 @@ public class CloningService {
         cloneCommand.setCloneSubmodules(true);
         cloneCommand.setTransportConfigCallback(transport -> {
             SshTransport sshTransport = (SshTransport) transport;
-            sshTransport.setSshSessionFactory(sshSessionFactory);
+            sshTransport.setSshSessionFactory(SSH_SESSION_FACTORY);
         });
+
         return cloneCommand.call();
     }
 

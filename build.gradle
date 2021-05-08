@@ -35,7 +35,8 @@ dependencies {
 
     implementation 'io.vavr:vavr:0.10.3'
 
-    implementation 'com.bacoder.jgit:org.eclipse.jgit:3.1.0-201309071158-r'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:5.11.0.202103091610-r'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:5.11.0.202103091610-r'
 
     testCompileOnly 'org.projectlombok:lombok:1.18.16'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.16'
