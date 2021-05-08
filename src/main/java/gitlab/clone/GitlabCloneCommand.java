@@ -11,9 +11,10 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import javax.inject.Inject;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Command(
@@ -120,6 +121,8 @@ public class GitlabCloneCommand implements Runnable {
             LoggerUtils.disableFullAppender();
         }
 
+        log.debug("gitlab-clone {}", String.join("", new AppVersionProvider().getVersion()));
+
         log.info("Cloning group '{}'", gitlabGroupName);
         final Flowable<Git> operations = gitlabService.searchGroups(gitlabGroupName, true)
                                                       .map(group -> gitlabService.getGitlabGroupProjects(group))
@@ -135,9 +138,10 @@ public class GitlabCloneCommand implements Runnable {
     static class AppVersionProvider implements CommandLine.IVersionProvider {
 
         @Override
-        public String[] getVersion() throws Exception {
-            final URI versionFileUri = AppVersionProvider.class.getResource("/VERSION").toURI();
-            String version = new String(Files.readAllBytes(Paths.get(versionFileUri)));
+        public String[] getVersion() {
+            final InputStream in = AppVersionProvider.class.getResourceAsStream("/VERSION");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+            String version = reader.lines().collect(Collectors.joining());
             return new String[]{
                     "v" + version
             };
