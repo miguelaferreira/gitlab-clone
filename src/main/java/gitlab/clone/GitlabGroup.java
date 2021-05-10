@@ -2,7 +2,9 @@ package gitlab.clone;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.core.annotation.Introspected;
 
+@Introspected
 public class GitlabGroup {
     private String id;
     private String name;
