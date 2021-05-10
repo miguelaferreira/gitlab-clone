@@ -91,7 +91,7 @@ public class GitlabCloneCommand implements Runnable {
     @Inject
     GitlabService gitlabService;
     @Inject
-    CloningService cloningService;
+    GitService gitService;
     @Inject
     LoggingSystem loggingSystem;
 
@@ -128,7 +128,7 @@ public class GitlabCloneCommand implements Runnable {
         log.info("Cloning group '{}'", gitlabGroupName);
         final Flowable<Git> operations = gitlabService.searchGroups(gitlabGroupName, true)
                                                       .map(group -> gitlabService.getGitlabGroupProjects(group))
-                                                      .flatMap(projects -> cloningService.cloneProjects(projects, localPath, true));
+                                                      .flatMap(projects -> gitService.cloneProjects(projects, localPath, true));
 
         // have to consume all elements of iterable for the code to execute
         operations.blockingIterable()

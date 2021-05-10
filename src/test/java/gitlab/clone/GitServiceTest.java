@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.eclipse.jgit.submodule.SubmoduleStatusType.INITIALIZED;
 import static org.eclipse.jgit.submodule.SubmoduleStatusType.UNINITIALIZED;
 
-class CloningServiceTest {
+class GitServiceTest {
 
     @TempDir
     File cloneDirectory;
@@ -37,7 +37,7 @@ class CloningServiceTest {
                                                    .pathWithNamespace("gitlab-clone-example/a-project")
                                                    .build();
 
-        final Git repo = new CloningService().cloneProject(project, cloneDirectoryPath, true);
+        final Git repo = new GitService().cloneProject(project, cloneDirectoryPath, true);
 
         assertThat(repo.log().call()).isNotEmpty();
         assertThat(repo.submoduleStatus().call()).containsKey("some-project-sub-module")
@@ -53,7 +53,7 @@ class CloningServiceTest {
                                                    .pathWithNamespace("gitlab-clone-example/a-project")
                                                    .build();
 
-        final Git repo = new CloningService().cloneProject(project, cloneDirectory.toPath().toString(), false);
+        final Git repo = new GitService().cloneProject(project, cloneDirectory.toPath().toString(), false);
 
         assertThat(repo.log().call()).isNotEmpty();
         assertThat(repo.submoduleStatus().call()).containsKey("some-project-sub-module")
@@ -84,7 +84,7 @@ class CloningServiceTest {
         );
 
 
-        final Flowable<Git> gits = new CloningService().cloneProjects(projects, cloneDirectoryPath, true);
+        final Flowable<Git> gits = new GitService().cloneProjects(projects, cloneDirectoryPath, true);
 
         final List<Git> repos = StreamSupport.stream(gits.blockingIterable().spliterator(), false)
                                              .collect(Collectors.toList());

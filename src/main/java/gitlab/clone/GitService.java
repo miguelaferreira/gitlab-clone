@@ -21,7 +21,7 @@ import java.nio.file.FileSystems;
 
 @Slf4j
 @Singleton
-public class CloningService {
+public class GitService {
 
     public static final SshSessionFactory SSH_SESSION_FACTORY = new JschConfigSessionFactory() {
         @Override
@@ -47,11 +47,7 @@ public class CloningService {
                                                 .toOption();
                        }).filter(Option::isDefined).map(Option::get);
     }
-
-    private void logFailedSubModulesInit(String projectName) {
-        log.debug("Could not initialize submodules for project '{}'", projectName);
-    }
-
+    
     private void logFailedClone(String projectName, Throwable throwable) {
         log.debug("Not cloning project '{}' because: {}", projectName, throwable.getMessage());
     }
@@ -60,13 +56,8 @@ public class CloningService {
         return repo.getRepository().getDirectory().toString();
     }
 
-    private Try<Git> recoverCloneError(String root, GitlabProject project, String projectName, Throwable throwable) {
-        log.debug("Initializing submodules for project '{}'", projectName);
-        return Try.of(() -> initSubmodules(project, root));
-    }
-
-    protected Git cloneProject(GitlabProject project, String root, boolean cloneSubmodules) throws GitAPIException {
-        String pathToClone = root + FileSystems.getDefault().getSeparator() + project.getPathWithNamespace();
+    protected Git cloneProject(GitlabProject project, String cloneDirectory, boolean cloneSubmodules) throws GitAPIException {
+        String pathToClone = cloneDirectory + FileSystems.getDefault().getSeparator() + project.getPathWithNamespace();
 
         final CloneCommand cloneCommand = Git.cloneRepository();
         cloneCommand.setURI(project.getSshUrlToRepo());
