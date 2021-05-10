@@ -66,10 +66,61 @@ Copyright(c) 2021 - Miguel Ferreira - GitHub/GitLab: @miguelaferreira
 
 ## Development
 
+### Setup
+
+SDKMAN automates the process of installing and upgrading sdks, namely Java sdks.
+Install is via.
+```bash
+curl -s "https://get.sdkman.io" | bash
+```
+Then install GraalVM.
+```bash
+sdk install java 21.1.0.r11-grl
+```
+Load the installed GraalVM on the current terminal.
+```bash
+sdk use java 21.1.0.r11-grl
+```
+
+To build native images using GraalVM it is necessary to install the `native-image` tool.
+```
+~/.sdkman/candidates/java/21.1.0.r11-grl/bin/gu install native-image
+```
+
+You should be ready to build the tool.
+
+### Build with Gradle
+
+Gradle is configured to build both executable jars and GraalVM native images.
+Gradle will also want to run tests, and the tests require a GitLab token with `read_api` scope.
+The token is picked up from the environment variable `GITLAB_TOKEN`.
+The tests can be skipped with the gradle flag `-x test`, in which case the GitLab token isn't needed anymore.
+
+To build an executable jar run gradle task `build`.
+```bash
+GITLAB_TOKEN="..." ./gradlew clean build
+```
+The executable jar is created under `build/libs/`, and it will be called something like `gitlab-clone-VERSION-all.jar`.
+To execute that jar run `java`.
+```bash
+java -jar build/libs/gitlab-clone-*-all.jar -h
+```
+
+To build a GraalVM native binary run the `nativeImage` gradle task.
+```bash
+GITLAB_TOKEN="..." ./gradlew clean nativeImage
+```
+The binary will be created under `build/native-image/application`.
+To execute the native binary run it.
+```bash
+build/native-image/application -h
+```
+
+### GraalVM Config
 In order to properly build a native image some configuration needs to be generated from running the app as a jar.
 That configuration is then included as a resource for the application, and the native image builder will load that to
 properly create the single binary.
-That can be done by running the app from jar while setting a JVM agent to collect the configuration.  
+That can be done by running the app from jar while setting a JVM agent to collect the configuration.
 During the app run all functionality should be exercised.
 ```
 ./gradlew clean build
