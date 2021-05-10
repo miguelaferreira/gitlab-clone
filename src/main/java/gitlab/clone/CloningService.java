@@ -34,9 +34,9 @@ public class CloningService {
         }
     };
 
-    public Flowable<Git> cloneProjects(Flowable<GitlabProject> projects, String root) {
-        log.debug("Cloning projects under directory '{}'", root);
-        return projects.map(project -> Tuple.of(project, Try.of(() -> cloneProject(project, root))))
+    public Flowable<Git> cloneProjects(Flowable<GitlabProject> projects, String cloneDirectory, boolean cloneSubmodules) {
+        log.debug("Cloning projects under directory '{}'", cloneDirectory);
+        return projects.map(project -> Tuple.of(project, Try.of(() -> cloneProject(project, cloneDirectory, cloneSubmodules))))
                        .map(tuple -> {
                            final GitlabProject project = tuple._1;
                            final Try<Git> cloneOperation = tuple._2;
@@ -44,8 +44,6 @@ public class CloningService {
                            log.info("Project '{}'", projectName);
                            return cloneOperation.onSuccess(repo -> log.debug("Cloned project '{}' to '{}'", projectName, getDirectory(repo)))
                                                 .onFailure(throwable -> logFailedClone(projectName, throwable))
-                                                .recoverWith(throwable -> recoverCloneError(root, project, projectName, throwable))
-                                                .onFailure(throwable -> logFailedSubModulesInit(projectName))
                                                 .toOption();
                        }).filter(Option::isDefined).map(Option::get);
     }
@@ -67,13 +65,13 @@ public class CloningService {
         return Try.of(() -> initSubmodules(project, root));
     }
 
-    protected Git cloneProject(GitlabProject project, String root) throws GitAPIException {
+    protected Git cloneProject(GitlabProject project, String root, boolean cloneSubmodules) throws GitAPIException {
         String pathToClone = root + FileSystems.getDefault().getSeparator() + project.getPathWithNamespace();
 
         final CloneCommand cloneCommand = Git.cloneRepository();
         cloneCommand.setURI(project.getSshUrlToRepo());
         cloneCommand.setDirectory(new File(pathToClone));
-        cloneCommand.setCloneSubmodules(true);
+        cloneCommand.setCloneSubmodules(cloneSubmodules);
         cloneCommand.setTransportConfigCallback(transport -> {
             SshTransport sshTransport = (SshTransport) transport;
             sshTransport.setSshSessionFactory(SSH_SESSION_FACTORY);

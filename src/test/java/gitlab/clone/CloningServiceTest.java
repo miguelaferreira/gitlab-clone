@@ -4,6 +4,7 @@ import io.reactivex.Flowable;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.submodule.SubmoduleStatusType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -14,14 +15,21 @@ import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.eclipse.jgit.submodule.SubmoduleStatusType.INITIALIZED;
+import static org.eclipse.jgit.submodule.SubmoduleStatusType.UNINITIALIZED;
 
 class CloningServiceTest {
 
     @TempDir
     File cloneDirectory;
+    private String cloneDirectoryPath;
+
+    @BeforeEach
+    void setUp() {
+        cloneDirectoryPath = this.cloneDirectory.toPath().toString();
+    }
 
     @Test
-    void cloneRepo() throws GitAPIException {
+    void cloneRepo_withSubmodule() throws GitAPIException {
         final GitlabProject project = GitlabProject.builder()
                                                    .name("a-project")
                                                    .sshUrlToRepo("git@gitlab.com:gitlab-clone-example/a-project.git")
@@ -29,9 +37,27 @@ class CloningServiceTest {
                                                    .pathWithNamespace("gitlab-clone-example/a-project")
                                                    .build();
 
-        final Git repo = new CloningService().cloneProject(project, cloneDirectory.toPath().toString());
+        final Git repo = new CloningService().cloneProject(project, cloneDirectoryPath, true);
 
         assertThat(repo.log().call()).isNotEmpty();
+        assertThat(repo.submoduleStatus().call()).containsKey("some-project-sub-module")
+                                                 .allSatisfy((key, value) -> submoduleIsInitialized(value));
+    }
+
+    @Test
+    void cloneRepo_withoutSubmodule() throws GitAPIException {
+        final GitlabProject project = GitlabProject.builder()
+                                                   .name("a-project")
+                                                   .sshUrlToRepo("git@gitlab.com:gitlab-clone-example/a-project.git")
+                                                   .nameWithNamespace("gitlab-clone-example / a-project")
+                                                   .pathWithNamespace("gitlab-clone-example/a-project")
+                                                   .build();
+
+        final Git repo = new CloningService().cloneProject(project, cloneDirectory.toPath().toString(), false);
+
+        assertThat(repo.log().call()).isNotEmpty();
+        assertThat(repo.submoduleStatus().call()).containsKey("some-project-sub-module")
+                                                 .allSatisfy((key, value) -> submoduleIsUninitialized(value));
     }
 
     @Test
@@ -57,16 +83,26 @@ class CloningServiceTest {
                              .build()
         );
 
-        final Flowable<Git> gits = new CloningService().cloneProjects(projects, cloneDirectory.toPath().toString());
+
+        final Flowable<Git> gits = new CloningService().cloneProjects(projects, cloneDirectoryPath, true);
 
         final List<Git> repos = StreamSupport.stream(gits.blockingIterable().spliterator(), false)
                                              .collect(Collectors.toList());
         assertThat(repos).hasSize(3);
-        assertThat(repos.get(0).submoduleStatus().call())
-                .containsKey("some-project-sub-module")
-                .allSatisfy((key, value) ->
-                        assertThat(value).extracting("type")
-                                         .isInstanceOfSatisfying(SubmoduleStatusType.class, status ->
-                                                 assertThat(status).isEqualTo(INITIALIZED)));
+        assertThat(repos.get(0).submoduleStatus().call()).containsKey("some-project-sub-module")
+                                                         .allSatisfy((key, value) -> submoduleIsInitialized(value));
+    }
+
+    private void submoduleIsInitialized(org.eclipse.jgit.submodule.SubmoduleStatus value) {
+        assertSubmoduleStatus(value, INITIALIZED);
+    }
+
+    private void submoduleIsUninitialized(org.eclipse.jgit.submodule.SubmoduleStatus value) {
+        assertSubmoduleStatus(value, UNINITIALIZED);
+    }
+
+    private void assertSubmoduleStatus(org.eclipse.jgit.submodule.SubmoduleStatus value, SubmoduleStatusType initialized) {
+        assertThat(value).extracting("type")
+                         .isInstanceOfSatisfying(SubmoduleStatusType.class, status -> assertThat(status).isEqualTo(initialized));
     }
 }
