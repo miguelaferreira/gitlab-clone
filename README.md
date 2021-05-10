@@ -18,7 +18,7 @@ Each release on this repository provides binaries for these two operating system
 To install the tool, either download the binary from the latest release, make it executable and place it on a reachable path;
 or use `brew`.
 ```bash
-brew install miguelaferreira/tools/git-clone
+brew install miguelaferreira/tools/gitlab-clone
 ```
 
 ## Usage
