@@ -132,7 +132,7 @@ public class GitlabCloneCommand implements Runnable {
 
         // have to consume all elements of iterable for the code to execute
         operations.blockingIterable()
-                  .forEach(gitRepo -> log.trace("Working on: {}", gitRepo));
+                  .forEach(gitRepo -> log.trace("Done with: {}", gitRepo));
 
         log.info("All done");
     }
