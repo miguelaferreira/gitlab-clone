@@ -25,7 +25,7 @@ brew install miguelaferreira/tools/gitlab-clone
 
 Both the gitlab url (`GITLAB_URL`) and the private token (`GITLAB_TOKEN`) for accessing GitLab API are read from the environment.
 The GitLab url defaults to [https://gitlab.com](https://gitlab.com) when not defined in the environment.
-For cloning public groups the token needs `read_api` scope and for private groups it needs the `api` scope.
+For cloning public groups no token is needed, for private groups a token with scope `read_api` is required.
 See GitLab's [Limiting scopes of a personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#limiting-scopes-of-a-personal-access-token)
 for more details on token scopes.
 

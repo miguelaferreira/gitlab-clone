@@ -41,6 +41,7 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok:1.18.16'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.16'
     testImplementation 'org.assertj:assertj-core:3.11.1'
+    implementation 'org.junit-pioneer:junit-pioneer:1.4.1'
 }
 
 application {

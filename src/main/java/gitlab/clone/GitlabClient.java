@@ -10,12 +10,12 @@ import io.reactivex.Flowable;
 import static gitlab.clone.GitlabClient.H_PRIVATE_TOKEN;
 
 @Client("${gitlab.url}/api/v4")
-@Header(name = H_PRIVATE_TOKEN, value = "${GITLAB_TOKEN}")
+@Header(name = H_PRIVATE_TOKEN, value = "${gitlab.token:}")
 public interface GitlabClient {
     String H_PRIVATE_TOKEN = "PRIVATE-TOKEN";
 
-    @Get("/groups{?search,per_page}")
-    Flowable<GitlabGroup> searchGroups(@QueryValue String search, @QueryValue(value = "per_page") int perPage);
+    @Get("/groups{?search,per_page,all_available}")
+    Flowable<GitlabGroup> searchGroups(@QueryValue String search, @QueryValue(value = "per_page") int perPage, @QueryValue(value = "all_available") boolean allAvailable);
 
     @Get("/groups/{id}/descendant_groups{?all_available,per_page,page}")
     Flowable<GitlabGroup> groupDescendants(

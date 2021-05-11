@@ -19,7 +19,7 @@ public class GitlabService {
 
     public Flowable<GitlabGroup> searchGroups(String search, boolean onlyNameMatches) {
         try {
-            final Flowable<GitlabGroup> gitlabGroupFlowable = client.searchGroups(search, MAX_GROUPS_PER_PAGE);
+            final Flowable<GitlabGroup> gitlabGroupFlowable = client.searchGroups(search, MAX_GROUPS_PER_PAGE, true);
             if (onlyNameMatches) {
                 log.debug("Looking for group named: {}", search);
                 return gitlabGroupFlowable.filter(gitlabGroup -> gitlabGroup.getName().equalsIgnoreCase(search));

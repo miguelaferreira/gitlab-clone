@@ -45,7 +45,7 @@ jobs:
       - name: "Gradle build"
         run: ./gradlew build nativeImage
         env:
-          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_TOKEN: ${{ secrets.BOT_GITLAB_TOKEN_READ_API }}
       - name: "Publish Unit Test Results"
         uses: EnricoMi/publish-unit-test-result-action/composite@v1
         if: always()
@@ -54,7 +54,7 @@ jobs:
       - name: "Run and test native image"
         run: .github/scripts/run-native-binary.sh
         env:
-          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_TOKEN: ${{ secrets.BOT_GITLAB_TOKEN_READ_API }}
       - name: "Clean up"
         if: ${{ always() }}
         run: sudo rm -rf ~/.ssh

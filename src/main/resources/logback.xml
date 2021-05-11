@@ -19,4 +19,6 @@
         <appender-ref ref="FULL"/>
     </root>
 
+    <!--    <logger name="io.micronaut.http.client" level="TRACE"/>-->
+
 </configuration>
