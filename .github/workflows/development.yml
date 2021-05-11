@@ -52,10 +52,7 @@ jobs:
         with:
           files: build/test-results/test/*.xml
       - name: "Run and test native image"
-        run: |
-          build/native-image/application -V
-          build/native-image/application gitlab-clone-example tool-test
-          [[ -f  tool-test/gitlab-clone-example/a-project/some-project-sub-module/README.md ]]
+        run: .github/scripts/run-native-binary.sh
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
       - name: "Clean up"

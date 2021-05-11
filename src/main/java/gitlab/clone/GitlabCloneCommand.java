@@ -104,10 +104,12 @@ public class GitlabCloneCommand implements Runnable {
         if (trace) {
             LoggerUtils.disableDefaultAppender();
             loggingSystem.setLogLevel("root", LogLevel.TRACE);
+            loggingSystem.setLogLevel("gitlab.clone", LogLevel.TRACE);
             log.trace("All loggers set to 'TRACE'");
         } else if (debug) {
             LoggerUtils.disableDefaultAppender();
             loggingSystem.setLogLevel("root", LogLevel.DEBUG);
+            loggingSystem.setLogLevel("gitlab.clone", LogLevel.DEBUG);
             log.debug("All loggers set to 'DEBUG'");
         } else if (veryVerbose) {
             LoggerUtils.disableFullAppender();
@@ -130,7 +132,7 @@ public class GitlabCloneCommand implements Runnable {
 
         // have to consume all elements of iterable for the code to execute
         operations.blockingIterable()
-                  .forEach(gitRepo -> log.trace("Working on: {}", gitRepo));
+                  .forEach(gitRepo -> log.trace("Done with: {}", gitRepo));
 
         log.info("All done");
     }

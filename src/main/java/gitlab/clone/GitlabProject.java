@@ -2,9 +2,11 @@ package gitlab.clone;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.core.annotation.Introspected;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 
+@Introspected
 @Builder
 @AllArgsConstructor
 public class GitlabProject {
