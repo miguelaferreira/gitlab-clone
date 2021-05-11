@@ -4,6 +4,7 @@ import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.logging.LogLevel;
 import io.micronaut.logging.LoggingSystem;
 import io.reactivex.Flowable;
+import io.vavr.control.Either;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
 import picocli.CommandLine;
@@ -46,27 +47,35 @@ public class GitlabCloneCommand implements Runnable {
 
     @Option(
             order = 0,
+            names = {"-r", "--recurse-submodules"},
+            description = "Initialize project submodules. If projects are already cloned try and initialize sub-modules anyway.",
+            defaultValue = "false"
+    )
+    private boolean recurseSubmodules;
+
+    @Option(
+            order = 1,
             names = {"-v", "--verbose"},
             description = "Print out extra information about what the tool is doing."
     )
     private boolean verbose;
 
     @Option(
-            order = 1,
+            order = 2,
             names = {"-x", "--very-verbose"},
             description = "Print out even more information about what the tool is doing."
     )
     private boolean veryVerbose;
 
     @Option(
-            order = 2,
+            order = 3,
             names = {"--debug"},
             description = "Sets all loggers to DEBUG level."
     )
     private boolean debug;
 
     @Option(
-            order = 3,
+            order = 4,
             names = {"--trace"},
             description = "Sets all loggers to TRACE level. WARNING: this setting will leak the GitLab token to the logs, use with caution."
     )
@@ -126,13 +135,29 @@ public class GitlabCloneCommand implements Runnable {
         log.debug("gitlab-clone {}", String.join("", new AppVersionProvider().getVersion()));
 
         log.info("Cloning group '{}'", gitlabGroupName);
-        final Flowable<Git> operations = gitlabService.searchGroups(gitlabGroupName, true)
-                                                      .map(group -> gitlabService.getGitlabGroupProjects(group))
-                                                      .flatMap(projects -> gitService.cloneProjects(projects, localPath, true));
+        final Flowable<Either<GitlabProject, Git>> cloneOperations = gitlabService.searchGroups(gitlabGroupName, true)
+                                                                                  .map(group -> gitlabService.getGitlabGroupProjects(group))
+                                                                                  .flatMap(projects -> gitService.cloneProjects(projects, localPath, recurseSubmodules));
+        final Flowable<Git> clonedRepositories = cloneOperations.filter(Either::isRight).map(Either::get);
+        final Flowable<GitlabProject> notClonedProjects = cloneOperations.filter(Either::isLeft).map(Either::getLeft);
+
+        final Flowable<Either<GitlabProject, Git>> submoduleInitOperations = recurseSubmodules
+                ? gitService.initSubmodules(notClonedProjects, localPath)
+                : Flowable.empty();
+        final Flowable<Git> initializedRepositories = submoduleInitOperations.filter(Either::isRight)
+                                                                             .map(Either::get);
+
+        // projects that were not cloned, and if 'recurseSubmodules == true' were also not initialized
+        final Flowable<GitlabProject> projectsWithErrors = submoduleInitOperations.filter(Either::isLeft)
+                                                                                  .map(Either::getLeft);
 
         // have to consume all elements of iterable for the code to execute
-        operations.blockingIterable()
-                  .forEach(gitRepo -> log.trace("Done with: {}", gitRepo));
+        Flowable.concat(clonedRepositories, initializedRepositories)
+                .blockingIterable()
+                .forEach(gitRepo -> log.trace("Done with: {}", gitRepo));
+        projectsWithErrors.blockingIterable()
+                          .forEach(project -> log.warn("Project '{}' wasn't {}", project.getNameWithNamespace(), recurseSubmodules ? "cloned nor initialized" : "cloned"));
+
 
         log.info("All done");
     }
