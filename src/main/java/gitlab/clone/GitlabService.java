@@ -49,10 +49,10 @@ public class GitlabService {
     private Flowable<GitlabGroup> getSubGroups(String groupId, int page) {
         log.trace("Looking for subgroups at page {}", page);
         try {
-            final Flowable<GitlabGroup> groups = client.groupDescendants(groupId, true, MAX_GROUPS_PER_PAGE, page);
-            return Flowable.concat(groups, groups.isEmpty()
-                                                 .toFlowable()
-                                                 .flatMap(isEmpty -> isEmpty ? Flowable.empty() : getSubGroups(groupId, page + 1)));
+            final Flowable<GitlabGroup> pageGroups = client.groupDescendants(groupId, true, MAX_GROUPS_PER_PAGE, page);
+            final Flowable<GitlabGroup> followingPageGroups = pageGroups.isEmpty().toFlowable()
+                                                                        .flatMap(isEmpty -> isEmpty ? Flowable.empty() : getSubGroups(groupId, page + 1));
+            return Flowable.concat(pageGroups, followingPageGroups);
         } catch (HttpClientException e) {
             log.error("GitLab API call failed: {}", e.getMessage());
             return Flowable.empty();

@@ -19,6 +19,7 @@ micronaut {
 }
 
 dependencies {
+
     compileOnly 'org.projectlombok:lombok:1.18.16'
     annotationProcessor 'org.projectlombok:lombok:1.18.16'
 
@@ -33,6 +34,7 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.30'
     implementation 'ch.qos.logback:logback-classic:1.2.3'
 
+
     implementation 'io.vavr:vavr:0.10.3'
 
     implementation 'org.eclipse.jgit:org.eclipse.jgit:5.11.0.202103091610-r'
@@ -41,7 +43,7 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok:1.18.16'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.16'
     testImplementation 'org.assertj:assertj-core:3.11.1'
-    implementation 'org.junit-pioneer:junit-pioneer:1.4.1'
+    testImplementation 'org.assertj:assertj-vavr:0.4.1'
 }
 
 application {
@@ -55,6 +57,8 @@ java {
 
 test {
     environment "GITLAB_TOKEN", System.getenv('GITLAB_TOKEN')
+//    maxHeapSize = "1G"
+//    forkEvery = 1
 }
 
 processResources {

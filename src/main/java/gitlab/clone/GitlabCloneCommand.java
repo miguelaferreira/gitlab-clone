@@ -1,5 +1,6 @@
 package gitlab.clone;
 
+import ch.qos.logback.core.joran.spi.JoranException;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.logging.LogLevel;
 import io.micronaut.logging.LoggingSystem;
@@ -110,26 +111,24 @@ public class GitlabCloneCommand implements Runnable {
 
     @Override
     public void run() {
-        if (trace) {
-            LoggerUtils.disableDefaultAppender();
-            loggingSystem.setLogLevel("root", LogLevel.TRACE);
-            loggingSystem.setLogLevel("gitlab.clone", LogLevel.TRACE);
-            log.trace("All loggers set to 'TRACE'");
-        } else if (debug) {
-            LoggerUtils.disableDefaultAppender();
-            loggingSystem.setLogLevel("root", LogLevel.DEBUG);
-            loggingSystem.setLogLevel("gitlab.clone", LogLevel.DEBUG);
-            log.debug("All loggers set to 'DEBUG'");
-        } else if (veryVerbose) {
-            LoggerUtils.disableFullAppender();
-            loggingSystem.setLogLevel("gitlab.clone", LogLevel.TRACE);
-            log.trace("Set 'gitlab.clone' logger to TRACE");
-        } else if (verbose) {
-            LoggerUtils.disableFullAppender();
-            loggingSystem.setLogLevel("gitlab.clone", LogLevel.DEBUG);
-            log.debug("Set 'gitlab.clone' logger to DEBUG");
-        } else {
-            LoggerUtils.disableFullAppender();
+        try {
+            if (trace) {
+                LoggingConfiguration.configureLoggers(loggingSystem, LogLevel.TRACE, true);
+                log.trace("Set all loggers to TRACE");
+            } else if (debug) {
+                LoggingConfiguration.configureLoggers(loggingSystem, LogLevel.DEBUG, true);
+                log.debug("Set all loggers to DEBUG");
+            } else if (veryVerbose) {
+                LoggingConfiguration.configureLoggers(loggingSystem, LogLevel.TRACE, false);
+                log.trace("Set application loggers to TRACE");
+            } else if (verbose) {
+                LoggingConfiguration.configureLoggers(loggingSystem, LogLevel.DEBUG, false);
+                log.debug("Set application loggers to DEBUG");
+            } else {
+                LoggingConfiguration.configureLoggers(loggingSystem, LogLevel.INFO, false);
+            }
+        } catch (JoranException e) {
+            System.out.println("ERROR: failed to configure loggers.");
         }
 
         log.debug("gitlab-clone {}", String.join("", new AppVersionProvider().getVersion()));
