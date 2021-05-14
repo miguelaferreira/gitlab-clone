@@ -1,13 +1,15 @@
 package gitlab.clone;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import io.reactivex.Flowable;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import javax.inject.Inject;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import io.reactivex.Flowable;
+import io.vavr.control.Either;
+import org.assertj.core.api.Assertions;
+import org.assertj.vavr.api.VavrAssertions;
+import org.junit.jupiter.api.Test;
 
 @MicronautTest
 class GitlabServiceTest {
@@ -18,17 +20,18 @@ class GitlabServiceTest {
     private GitlabService service;
 
     @Test
-    void searchGroups_nameOnly() {
-        final Flowable<GitlabGroup> groups = service.searchGroups(GITLAB_GROUP, true);
+    void findGroupByName() {
+        final Either<String, GitlabGroup> maybeGroup = service.findGroupByName(GITLAB_GROUP);
 
-        assertThat(groups.blockingIterable()).hasSize(1);
+        VavrAssertions.assertThat(maybeGroup).isRight();
+        Assertions.assertThat(maybeGroup.get().getName()).isEqualTo(GITLAB_GROUP);
     }
 
     @Test
     void getGitlabGroupProjects() {
-        final GitlabGroup group = service.searchGroups(GITLAB_GROUP, true).blockingFirst();
+        final GitlabGroup group = service.findGroupByName(GITLAB_GROUP).get();
         final Flowable<GitlabProject> projects = service.getGitlabGroupProjects(group);
 
-        assertThat(projects.blockingIterable()).hasSize(5);
+        assertThat(projects.blockingIterable()).hasSize(3);
     }
 }

@@ -1,18 +1,19 @@
 package gitlab.clone;
 
-import ch.qos.logback.core.joran.spi.JoranException;
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Path;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import ch.qos.logback.core.joran.spi.JoranException;
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
+import org.assertj.core.api.AbstractStringAssert;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class GitlabCloneCommandWithTokenTest extends GitlabCloneCommandBase {
 
@@ -50,7 +51,8 @@ public class GitlabCloneCommandWithTokenTest extends GitlabCloneCommandBase {
             String[] args = new String[]{"-x", PRIVATE_GROUP_NAME, cloneDirectory.toPath().toString()};
             PicocliRunner.run(GitlabCloneCommand.class, ctx, args);
 
-            assertLogsTrace(baos.toString(), PRIVATE_GROUP_NAME);
+            final AbstractStringAssert<?> testAssert = assertLogsTrace(baos.toString(), PRIVATE_GROUP_NAME);
+            assertLogsTraceWhenGroupFound(testAssert, PRIVATE_GROUP_NAME);
             assertCloneContentsPrivateGroup(cloneDirectory);
         }
     }
@@ -64,7 +66,8 @@ public class GitlabCloneCommandWithTokenTest extends GitlabCloneCommandBase {
             String[] args = new String[]{"-x", "-r", PUBLIC_GROUP_NAME, cloneDirectory.toPath().toString()};
             PicocliRunner.run(GitlabCloneCommand.class, ctx, args);
 
-            assertLogsTrace(baos.toString(), PUBLIC_GROUP_NAME);
+            final AbstractStringAssert<?> testAssert = assertLogsTrace(baos.toString(), PUBLIC_GROUP_NAME);
+            assertLogsTraceWhenGroupFound(testAssert, PUBLIC_GROUP_NAME);
             assertCloneContentsPublicGroup(cloneDirectory, true);
         }
     }

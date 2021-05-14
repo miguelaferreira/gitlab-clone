@@ -1,9 +1,11 @@
 package gitlab.clone;
 
+import javax.inject.Singleton;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+
 import com.jcraft.jsch.Session;
-import io.reactivex.Flowable;
-import io.vavr.CheckedFunction0;
-import io.vavr.Tuple;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
 import lombok.extern.slf4j.Slf4j;
@@ -14,11 +16,6 @@ import org.eclipse.jgit.transport.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.OpenSshConfig;
 import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.jgit.transport.SshTransport;
-
-import javax.inject.Singleton;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileSystems;
 
 @Slf4j
 @Singleton
@@ -35,18 +32,29 @@ public class GitService {
         }
     };
 
-    public Flowable<Either<GitlabProject, Git>> cloneProjects(Flowable<GitlabProject> projects, String cloneDirectory, boolean cloneSubmodules) {
-        log.trace("Cloning projects under directory '{}'", cloneDirectory);
-        return projects.map(project -> Tuple.of(project, Try.of(() -> cloneProject(project, cloneDirectory, cloneSubmodules))))
-                       .map(tuple -> {
-                           final GitlabProject project = tuple._1;
-                           final Try<Git> cloneOperation = tuple._2;
-                           final String projectName = project.getNameWithNamespace();
-                           log.info("Cloning project '{}'", projectName);
-                           return cloneOperation.onSuccess(repo -> log.debug("Cloned project '{}' to '{}'", projectName, getDirectory(repo)))
-                                                .onFailure(throwable -> logFailedClone(projectName, throwable))
-                                                .toEither(project);
-                       });
+    public Either<String, Git> cloneOrInitSubmodulesProject(GitlabProject project, String cloneDirectory) {
+        final String projectName = project.getNameWithNamespace();
+        log.trace("Cloning or initializing submodules for project '{}' under directory '{}'", projectName, cloneDirectory);
+        return tryCloneProject(project, cloneDirectory, projectName, true)
+                .recoverWith(t -> Try.of(() -> initSubmodules(project, cloneDirectory)))
+                .onSuccess(gitRepo -> log.trace("Initialized submodules of git repository at '{}'", getDirectory(gitRepo)))
+                .onFailure(t -> logFailedSubmoduleInit(projectName, t))
+                .toEither()
+                .mapLeft(t -> String.format("Could not clone nor initialize project submodules for project '%s'.", projectName));
+    }
+
+    public Either<String, Git> cloneProject(final GitlabProject project, final String cloneDirectory) {
+        final String projectName = project.getNameWithNamespace();
+        log.trace("Cloning project '{}' under directory '{}'", projectName, cloneDirectory);
+        return tryCloneProject(project, cloneDirectory, projectName, false)
+                .toEither()
+                .mapLeft(t -> String.format("Could not clone project '%s'.", projectName));
+    }
+
+    private Try<Git> tryCloneProject(final GitlabProject project, final String cloneDirectory, final String projectName, final boolean cloneSubmodules) {
+        return Try.of(() -> cloneProject(project, cloneDirectory, cloneSubmodules))
+                  .onSuccess(gitRepo -> log.trace("Cloned project '{}' to '{}'", projectName, getDirectory(gitRepo)))
+                  .onFailure(t -> logFailedClone(projectName, t));
     }
 
     protected Git openRepository(GitlabProject project, String cloneDirectory) throws IOException {
@@ -55,11 +63,11 @@ public class GitService {
     }
 
     private void logFailedClone(String projectName, Throwable throwable) {
-        log.debug("Not cloning project '{}' because: {}", projectName, throwable.getMessage());
+        log.debug(String.format("Could not clone project '%s' because: %s", projectName, throwable.getMessage()), throwable);
     }
 
-    private String getDirectory(Git repo) {
-        return repo.getRepository().getDirectory().toString();
+    private String getDirectory(Git gitRepo) {
+        return gitRepo.getRepository().getDirectory().toString();
     }
 
     protected Git cloneProject(GitlabProject project, String cloneDirectory, boolean cloneSubmodules) throws GitAPIException {
@@ -77,23 +85,14 @@ public class GitService {
         return cloneCommand.call();
     }
 
-    protected Flowable<Either<GitlabProject, Git>> initSubmodules(Flowable<GitlabProject> projects, String cloneDirectory) {
-        log.trace("Initializing projects under directory '{}'", cloneDirectory);
-        return projects.map(project -> {
-            final String projectName = project.getNameWithNamespace();
-            final CheckedFunction0<Git> initOperation = () -> {
-                final Git repo = openRepository(project, cloneDirectory);
-                repo.submoduleInit().call();
-                return repo;
-            };
-            return Try.of(initOperation)
-                      .onSuccess(repo -> log.debug("Initialized submodules for project '{}' to '{}'", projectName, getDirectory(repo)))
-                      .onFailure(throwable -> logFailedSubmoduleInit(projectName, throwable))
-                      .toEither(project);
-        });
+    protected Git initSubmodules(GitlabProject project, String cloneDirectory) throws IOException, GitAPIException {
+        final Git repo = openRepository(project, cloneDirectory);
+        repo.submoduleInit().call();
+        repo.submoduleUpdate().call();
+        return repo;
     }
 
     private void logFailedSubmoduleInit(String projectName, Throwable throwable) {
-        log.debug("Could not initialize submodules for project '{}' because: {}", projectName, throwable.getMessage());
+        log.debug(String.format("Could not initialize submodules for project '%s' because: %s", projectName, throwable.getMessage()), throwable);
     }
 }

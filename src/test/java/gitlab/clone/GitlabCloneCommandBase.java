@@ -1,9 +1,6 @@
 package gitlab.clone;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import org.assertj.core.api.AbstractFileAssert;
-import org.assertj.core.api.AbstractStringAssert;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -11,7 +8,10 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
+import org.assertj.core.api.AbstractFileAssert;
+import org.assertj.core.api.AbstractStringAssert;
 
 public class GitlabCloneCommandBase {
     public static final String PUBLIC_GROUP_NAME = "gitlab-clone-example";
@@ -37,7 +37,7 @@ public class GitlabCloneCommandBase {
         assertThat(output).contains("] DEBUG gitlab.clone.GitlabCloneCommand - Set all loggers to DEBUG")
                           .contains(String.format("] INFO  gitlab.clone.GitlabCloneCommand - Cloning group '%s'", groupName))
                           .contains(String.format("] DEBUG gitlab.clone.GitlabService - Looking for group named: %s", groupName))
-                          .contains(String.format("] DEBUG gitlab.clone.GitlabService - Searching for projects in group %s", groupName))
+                          .contains(String.format("] DEBUG gitlab.clone.GitlabService - Searching for projects in group '%s'", groupName))
                           .contains("] INFO  gitlab.clone.GitlabCloneCommand - All done")
                           .doesNotContain("PRIVATE-TOKEN");
     }
@@ -46,8 +46,8 @@ public class GitlabCloneCommandBase {
         assertThat(output).contains("] TRACE gitlab.clone.GitlabCloneCommand - Set all loggers to TRACE")
                           .contains(String.format("] INFO  gitlab.clone.GitlabCloneCommand - Cloning group '%s'", groupName))
                           .contains(String.format("] DEBUG gitlab.clone.GitlabService - Looking for group named: %s", groupName))
-                          .contains(String.format("] DEBUG gitlab.clone.GitlabService - Searching for projects in group %s", groupName))
-                          .contains("] TRACE gitlab.clone.GitlabService - Looking for subgroups at page")
+                          .contains(String.format("] DEBUG gitlab.clone.GitlabService - Searching for projects in group '%s'", groupName))
+                          .contains("] TRACE gitlab.clone.GitlabService - Invoking paginated API")
                           .contains("] TRACE gitlab.clone.GitService - ssh :: ")
                           .contains("] INFO  gitlab.clone.GitlabCloneCommand - All done")
                           .contains("PRIVATE-TOKEN");
@@ -57,7 +57,7 @@ public class GitlabCloneCommandBase {
         return assertThat(output).contains("Set application loggers to DEBUG")
                                  .contains(String.format("Cloning group '%s'", groupName))
                                  .contains(String.format("Looking for group named: %s", groupName))
-                                 .contains(String.format("Searching for projects in group %s", groupName))
+                                 .contains(String.format("Searching for projects in group '%s'", groupName))
                                  .contains("All done")
                                  .doesNotContain("PRIVATE-TOKEN")
                                  .doesNotContain("gitlab.clone.GitlabCloneCommand");
@@ -67,12 +67,20 @@ public class GitlabCloneCommandBase {
         return assertThat(output).contains("Set application loggers to TRACE")
                                  .contains(String.format("Cloning group '%s'", groupName))
                                  .contains(String.format("Looking for group named: %s", groupName))
-                                 .contains(String.format("Searching for projects in group %s", groupName))
-                                 .contains("Looking for subgroups at page")
-                                 .contains("ssh :: ")
-                                 .contains("All done")
-                                 .doesNotContain("PRIVATE-TOKEN")
                                  .doesNotContain("gitlab.clone.GitlabCloneCommand");
+    }
+
+    public AbstractStringAssert<?> assertLogsTraceWhenGroupFound(AbstractStringAssert<?> testAssert, String groupName) {
+        return testAssert.contains(String.format("Searching for projects in group '%s'", groupName))
+                         .contains("Invoking paginated API")
+                         .contains("ssh :: ")
+                         .contains("All done")
+                         .doesNotContain("PRIVATE-TOKEN")
+                         .doesNotContain("gitlab.clone.GitlabCloneCommand");
+    }
+
+    public AbstractStringAssert<?> assertLogsTraceWhenGroupNotFound(AbstractStringAssert<?> testAssert, String groupName) {
+        return testAssert.contains(String.format("Could not find group '%s': Group not found", groupName));
     }
 
     public void assertCloneContentsPublicGroup(File cloneDirectory, boolean withSubmodules) {
@@ -96,5 +104,9 @@ public class GitlabCloneCommandBase {
         abstractFileAssert.isDirectoryContaining(String.format("glob:**/%s", PRIVATE_GROUP_NAME))
                           .isDirectoryRecursivelyContaining(String.format("glob:**/%s/a-private-project/README.md", PRIVATE_GROUP_NAME))
                           .isDirectoryRecursivelyContaining(String.format("glob:**/%s/sub-group-1/another-private-project/README.md", PRIVATE_GROUP_NAME));
+    }
+
+    public void assertNotCloned(File cloneDirectory) {
+        assertThat(cloneDirectory).isEmptyDirectory();
     }
 }

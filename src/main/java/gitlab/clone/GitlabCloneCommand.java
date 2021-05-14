@@ -1,22 +1,24 @@
 package gitlab.clone;
 
+import javax.inject.Inject;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.stream.Collectors;
+
 import ch.qos.logback.core.joran.spi.JoranException;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.logging.LogLevel;
 import io.micronaut.logging.LoggingSystem;
 import io.reactivex.Flowable;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import io.vavr.control.Either;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
-
-import javax.inject.Inject;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Command(
@@ -134,29 +136,30 @@ public class GitlabCloneCommand implements Runnable {
         log.debug("gitlab-clone {}", String.join("", new AppVersionProvider().getVersion()));
 
         log.info("Cloning group '{}'", gitlabGroupName);
-        final Flowable<Either<GitlabProject, Git>> cloneOperations = gitlabService.searchGroups(gitlabGroupName, true)
-                                                                                  .map(group -> gitlabService.getGitlabGroupProjects(group))
-                                                                                  .flatMap(projects -> gitService.cloneProjects(projects, localPath, recurseSubmodules));
-        final Flowable<Git> clonedRepositories = cloneOperations.filter(Either::isRight).map(Either::get);
-        final Flowable<GitlabProject> notClonedProjects = cloneOperations.filter(Either::isLeft).map(Either::getLeft);
+        final Either<String, GitlabGroup> maybeGroup = gitlabService.findGroupByName(gitlabGroupName);
+        if (maybeGroup.isLeft()) {
+            log.info("Could not find group '{}': {}", gitlabGroupName, maybeGroup.getLeft());
+            return;
+        }
 
-        final Flowable<Either<GitlabProject, Git>> submoduleInitOperations = recurseSubmodules
-                ? gitService.initSubmodules(notClonedProjects, localPath)
-                : Flowable.empty();
-        final Flowable<Git> initializedRepositories = submoduleInitOperations.filter(Either::isRight)
-                                                                             .map(Either::get);
+        final GitlabGroup group = maybeGroup.get();
+        final Flowable<GitlabProject> groupProjects = gitlabService.getGitlabGroupProjects(group);
+        final Flowable<Tuple2<GitlabProject, GitlabProject>> projectsZip = groupProjects.map(project -> Tuple.of(project, project));
+        final Flowable<Tuple2<GitlabProject, Either<String, Git>>> clonedProjects = projectsZip.map(
+                tuple1 -> tuple1.map2(
+                        project -> recurseSubmodules ? gitService.cloneOrInitSubmodulesProject(project, localPath) : gitService.cloneProject(project, localPath))
+        );
 
-        // projects that were not cloned, and if 'recurseSubmodules == true' were also not initialized
-        final Flowable<GitlabProject> projectsWithErrors = submoduleInitOperations.filter(Either::isLeft)
-                                                                                  .map(Either::getLeft);
-
-        // have to consume all elements of iterable for the code to execute
-        Flowable.concat(clonedRepositories, initializedRepositories)
-                .blockingIterable()
-                .forEach(gitRepo -> log.trace("Done with: {}", gitRepo));
-        projectsWithErrors.blockingIterable()
-                          .forEach(project -> log.warn("Project '{}' wasn't {}", project.getNameWithNamespace(), recurseSubmodules ? "cloned nor initialized" : "cloned"));
-
+        clonedProjects.blockingIterable()
+                      .forEach(tuple -> {
+                          final GitlabProject project = tuple._1;
+                          final Either<String, Git> gitRepoOrError = tuple._2;
+                          if (gitRepoOrError.isLeft()) {
+                              log.warn(gitRepoOrError.getLeft());
+                          } else {
+                              log.info("Project '{}' updated.", project.getNameWithNamespace());
+                          }
+                      });
 
         log.info("All done");
     }
@@ -166,12 +169,13 @@ public class GitlabCloneCommand implements Runnable {
         @Override
         public String[] getVersion() {
             final InputStream in = AppVersionProvider.class.getResourceAsStream("/VERSION");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            String version = reader.lines().collect(Collectors.joining());
-            return new String[]{
-                    "v" + version
-            };
+            if (in != null) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                String version = reader.lines().collect(Collectors.joining());
+                return new String[]{"v" + version};
+            } else {
+                return new String[]{"No version"};
+            }
         }
     }
-
 }

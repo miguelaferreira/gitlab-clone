@@ -1,22 +1,23 @@
 package gitlab.clone;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.eclipse.jgit.submodule.SubmoduleStatusType.INITIALIZED;
+import static org.eclipse.jgit.submodule.SubmoduleStatusType.UNINITIALIZED;
+
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+
 import io.reactivex.Flowable;
 import io.vavr.collection.Stream;
 import io.vavr.control.Either;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.submodule.SubmoduleStatus;
 import org.eclipse.jgit.submodule.SubmoduleStatusType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.eclipse.jgit.submodule.SubmoduleStatusType.INITIALIZED;
-import static org.eclipse.jgit.submodule.SubmoduleStatusType.UNINITIALIZED;
 
 class GitServiceTest {
 
@@ -42,7 +43,7 @@ class GitServiceTest {
 
         assertThat(repo.log().call()).isNotEmpty();
         assertThat(repo.submoduleStatus().call()).containsKey("some-project-sub-module")
-                                                 .allSatisfy((key, value) -> submoduleIsInitialized(value));
+                                                 .allSatisfy(this::submoduleIsInitialized);
     }
 
     @Test
@@ -58,43 +59,11 @@ class GitServiceTest {
 
         assertThat(repo.log().call()).isNotEmpty();
         assertThat(repo.submoduleStatus().call()).containsKey("some-project-sub-module")
-                                                 .allSatisfy((key, value) -> submoduleIsUninitialized(value));
+                                                 .allSatisfy(this::submoduleIsUninitialized);
     }
 
     @Test
     void testCloneRepositories_freshClone_withSubmodules() throws GitAPIException {
-        Flowable<GitlabProject> projects = Flowable.just(
-                GitlabProject.builder()
-                             .name("a-project")
-                             .sshUrlToRepo("git@gitlab.com:gitlab-clone-example/a-project.git")
-                             .nameWithNamespace("gitlab-clone-example / a-project")
-                             .pathWithNamespace("gitlab-clone-example/a-project")
-                             .build(),
-                GitlabProject.builder()
-                             .name("some-project")
-                             .sshUrlToRepo("git@gitlab.com:gitlab-clone-example/sub-group-1/some-project.git")
-                             .nameWithNamespace("gitlab-clone-example / sub-group-1 / some-project")
-                             .pathWithNamespace("gitlab-clone-example/sub-group-1/some-project")
-                             .build(),
-                GitlabProject.builder()
-                             .name("another-project")
-                             .sshUrlToRepo("git@gitlab.com:gitlab-clone-example/sub-group-2/sub-group-3/another-project.git")
-                             .nameWithNamespace("gitlab-clone-example / sub-group-2 / sub-group-3 / another-project")
-                             .pathWithNamespace("gitlab-clone-example/sub-group-2/sub-group-3/another-project")
-                             .build()
-        );
-
-
-        final Stream<Either<GitlabProject, Git>> result = flowableToStream(new GitService().cloneProjects(projects, cloneDirectoryPath, true));
-        final List<Git> gits = result.filter(Either::isRight).map(Either::get).toJavaList();
-
-        assertThat(gits).hasSize(3);
-        assertThat(gits.get(0).submoduleStatus().call()).containsKey("some-project-sub-module")
-                                                        .allSatisfy((key, value) -> submoduleIsInitialized(value));
-    }
-
-    @Test
-    void testCloneRepositories_existingClone_withSubmodules() throws GitAPIException, IOException {
         final GitService gitService = new GitService();
         Flowable<GitlabProject> projects = Flowable.just(
                 GitlabProject.builder()
@@ -116,27 +85,65 @@ class GitServiceTest {
                              .pathWithNamespace("gitlab-clone-example/sub-group-2/sub-group-3/another-project")
                              .build()
         );
-        // create first clone with only one repo
+
+        final Stream<Either<String, Git>> result = flowableToStream(projects.map(project -> gitService.cloneProject(project, cloneDirectoryPath)));
+        final List<Git> gits = result.filter(Either::isRight).map(Either::get).toJavaList();
+
+        assertThat(gits).hasSize(3);
+        assertThat(gits.get(0).submoduleStatus().call()).containsKey("some-project-sub-module")
+                                                        .allSatisfy(this::submoduleIsUninitialized);
+    }
+
+    @Test
+    void testCloneOrInitSubmodulesProject_existingClone_withSubmodules() throws GitAPIException {
+        final GitService gitService = new GitService();
+        Flowable<GitlabProject> projects = Flowable.just(
+                GitlabProject.builder()
+                             .name("a-project")
+                             .sshUrlToRepo("git@gitlab.com:gitlab-clone-example/a-project.git")
+                             .nameWithNamespace("gitlab-clone-example / a-project")
+                             .pathWithNamespace("gitlab-clone-example/a-project")
+                             .build(),
+                GitlabProject.builder()
+                             .name("some-project")
+                             .sshUrlToRepo("git@gitlab.com:gitlab-clone-example/sub-group-1/some-project.git")
+                             .nameWithNamespace("gitlab-clone-example / sub-group-1 / some-project")
+                             .pathWithNamespace("gitlab-clone-example/sub-group-1/some-project")
+                             .build(),
+                GitlabProject.builder()
+                             .name("another-project")
+                             .sshUrlToRepo("git@gitlab.com:gitlab-clone-example/sub-group-2/sub-group-3/another-project.git")
+                             .nameWithNamespace("gitlab-clone-example / sub-group-2 / sub-group-3 / another-project")
+                             .pathWithNamespace("gitlab-clone-example/sub-group-2/sub-group-3/another-project")
+                             .build()
+        );
+        // create first clone with only one repo, without submodules
         final GitlabProject firstProject = projects.blockingFirst();
         final Git existingClone = gitService.cloneProject(firstProject, cloneDirectoryPath, true);
         assertThat(existingClone).isNotNull();
         assertThat(existingClone.submoduleStatus().call()).containsKey("some-project-sub-module")
-                                                          .allSatisfy((key, value) -> submoduleIsInitialized(value));
+                                                          .allSatisfy(this::submoduleIsInitialized);
 
         // clone entire group
-        final Stream<Either<GitlabProject, Git>> result = flowableToStream(gitService.cloneProjects(projects, cloneDirectoryPath, true));
-        final List<GitlabProject> notClonedProjects = result.filter(Either::isLeft).map(Either::getLeft).toJavaList();
+        final Stream<Either<String, Git>> result = flowableToStream(projects.map(project -> gitService.cloneOrInitSubmodulesProject(project, cloneDirectoryPath)));
+        final List<String> errors = result.filter(Either::isLeft).map(Either::getLeft).toJavaList();
         final List<Git> gits = result.filter(Either::isRight).map(Either::get).toJavaList();
+        final java.util.stream.Stream<Map<String, SubmoduleStatus>> submoduleStatus = gits.stream().map(git -> {
+            try {
+                return git.submoduleStatus().call();
+            } catch (GitAPIException e) {
+                e.printStackTrace();
+                return Map.of();
+            }
+        });
 
-        assertThat(notClonedProjects).hasSize(1);
-        assertThat(gits).hasSize(2);
-        assertThat(gitService.openRepository(firstProject, cloneDirectoryPath).submoduleStatus().call())
-                .containsKey("some-project-sub-module")
-                .allSatisfy((key, value) -> submoduleIsInitialized(value));
+        assertThat(errors).isEmpty();
+        assertThat(gits).hasSize(3);
+        assertThat(submoduleStatus).allSatisfy(subModules -> assertThat(subModules).allSatisfy(this::submoduleIsInitialized));
     }
 
     @Test
-    void testCloneRepositories_existingClone_withoutSubmodules() throws GitAPIException, IOException {
+    void testCloneOrInitSubmodulesProject_existingClone_withoutSubmodules() throws GitAPIException {
         final GitService gitService = new GitService();
         Flowable<GitlabProject> projects = Flowable.just(
                 GitlabProject.builder()
@@ -163,34 +170,42 @@ class GitServiceTest {
         final Git existingClone = gitService.cloneProject(firstProject, cloneDirectoryPath, false);
         assertThat(existingClone).isNotNull();
         assertThat(existingClone.submoduleStatus().call()).containsKey("some-project-sub-module")
-                                                          .allSatisfy((key, value) -> submoduleIsUninitialized(value));
+                                                          .allSatisfy(this::submoduleIsUninitialized);
 
         // clone entire group
-        final Stream<Either<GitlabProject, Git>> result = flowableToStream(new GitService().cloneProjects(projects, cloneDirectoryPath, true));
-        final List<GitlabProject> notClonedProjects = result.filter(Either::isLeft).map(Either::getLeft).toJavaList();
+        final Stream<Either<String, Git>> result = flowableToStream(projects.map(project -> gitService.cloneOrInitSubmodulesProject(project, cloneDirectoryPath)));
+        final List<String> errors = result.filter(Either::isLeft).map(Either::getLeft).toJavaList();
         final List<Git> gits = result.filter(Either::isRight).map(Either::get).toJavaList();
+        final java.util.stream.Stream<Map<String, SubmoduleStatus>> submoduleStatus = gits.stream().map(git -> {
+            try {
+                return git.submoduleStatus().call();
+            } catch (GitAPIException e) {
+                e.printStackTrace();
+                return Map.of();
+            }
+        });
 
-        assertThat(notClonedProjects).hasSize(1);
-        assertThat(gits).hasSize(2);
-        assertThat(gitService.openRepository(firstProject, cloneDirectoryPath).submoduleStatus().call())
-                .containsKey("some-project-sub-module")
-                .allSatisfy((key, value) -> submoduleIsUninitialized(value));
+        assertThat(errors).isEmpty();
+        assertThat(gits).hasSize(3);
+        assertThat(submoduleStatus).allSatisfy(subModules -> assertThat(subModules).allSatisfy(this::submoduleIsInitialized));
     }
 
-    private Stream<Either<GitlabProject, Git>> flowableToStream(Flowable<Either<GitlabProject, Git>> gits) {
+    private <T> Stream<T> flowableToStream(Flowable<T> gits) {
         return Stream.ofAll(gits.blockingIterable());
     }
 
-    private void submoduleIsInitialized(org.eclipse.jgit.submodule.SubmoduleStatus value) {
-        assertSubmoduleStatus(value, INITIALIZED);
+    private void submoduleIsInitialized(String name, SubmoduleStatus status) {
+        assertSubmoduleStatus(name, status, INITIALIZED);
     }
 
-    private void submoduleIsUninitialized(org.eclipse.jgit.submodule.SubmoduleStatus value) {
-        assertSubmoduleStatus(value, UNINITIALIZED);
+    private void submoduleIsUninitialized(String name, SubmoduleStatus value) {
+        assertSubmoduleStatus(name, value, UNINITIALIZED);
     }
 
-    private void assertSubmoduleStatus(org.eclipse.jgit.submodule.SubmoduleStatus value, SubmoduleStatusType initialized) {
-        assertThat(value).extracting("type")
-                         .isInstanceOfSatisfying(SubmoduleStatusType.class, status -> assertThat(status).isEqualTo(initialized));
+    private void assertSubmoduleStatus(String name, SubmoduleStatus status, SubmoduleStatusType initialized) {
+        assertThat(status)
+                .extracting("type")
+                .as("Check status of submodule " + name)
+                .isInstanceOfSatisfying(SubmoduleStatusType.class, statusType -> assertThat(statusType).isEqualTo(initialized));
     }
 }

@@ -1,40 +1,39 @@
 package gitlab.clone;
 
+import javax.inject.Singleton;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.exceptions.HttpClientException;
 import io.reactivex.Flowable;
+import io.vavr.control.Either;
+import io.vavr.control.Option;
 import lombok.extern.slf4j.Slf4j;
-
-import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
 public class GitlabService {
 
     public static final int MAX_GROUPS_PER_PAGE = 100;
+    public static final String RESPONSE_HEADER_NEXT_PAGE = "X-Next-Page";
     private final GitlabClient client;
 
     public GitlabService(GitlabClient client) {
         this.client = client;
     }
 
-    public Flowable<GitlabGroup> searchGroups(String search, boolean onlyNameMatches) {
-        try {
-            final Flowable<GitlabGroup> gitlabGroupFlowable = client.searchGroups(search, MAX_GROUPS_PER_PAGE, true);
-            if (onlyNameMatches) {
-                log.debug("Looking for group named: {}", search);
-                return gitlabGroupFlowable.filter(gitlabGroup -> gitlabGroup.getName().equalsIgnoreCase(search));
-            } else {
-                log.debug("Looking for group matching: {}", search);
-                return gitlabGroupFlowable;
-            }
-        } catch (HttpClientException e) {
-            log.error("GitLab API call failed: {}", e.getMessage());
-            return Flowable.empty();
-        }
+    public Either<String, GitlabGroup> findGroupByName(String groupName) {
+        log.debug("Looking for group named: {}", groupName);
+        Function<Integer, Flowable<HttpResponse<List<GitlabGroup>>>> apiCall = pageIndex -> client.searchGroups(groupName, true, MAX_GROUPS_PER_PAGE, pageIndex);
+        final Flowable<GitlabGroup> results = paginatedApiCall(apiCall);
+        return results.filter(gitlabGroup -> gitlabGroup.getName().equalsIgnoreCase(groupName))
+                      .map(Either::<String, GitlabGroup>right).blockingFirst(Either.left("Group not found"));
     }
 
     public Flowable<GitlabProject> getGitlabGroupProjects(GitlabGroup group) {
-        log.debug("Searching for projects in group {}", group.getFullPath());
+        log.debug("Searching for projects in group '{}'", group.getFullPath());
         final String groupId = group.getId();
         Flowable<GitlabProject> projects = getGroupProjects(groupId);
         Flowable<GitlabGroup> subGroups = getSubGroups(groupId);
@@ -43,30 +42,37 @@ public class GitlabService {
     }
 
     private Flowable<GitlabGroup> getSubGroups(String groupId) {
-        return getSubGroups(groupId, 0);
-    }
-
-    private Flowable<GitlabGroup> getSubGroups(String groupId, int page) {
-        log.trace("Looking for subgroups at page {}", page);
-        try {
-            final Flowable<GitlabGroup> pageGroups = client.groupDescendants(groupId, true, MAX_GROUPS_PER_PAGE, page);
-            final Flowable<GitlabGroup> followingPageGroups = pageGroups.isEmpty().toFlowable()
-                                                                        .flatMap(isEmpty -> isEmpty ? Flowable.empty() : getSubGroups(groupId, page + 1));
-            return Flowable.concat(pageGroups, followingPageGroups);
-        } catch (HttpClientException e) {
-            log.error("GitLab API call failed: {}", e.getMessage());
-            return Flowable.empty();
-        }
-    }
-
-    private GitlabProject logProject(GitlabProject project) {
-        log.trace("Found project {}", project.getPathWithNamespace());
-        return project;
+        return paginatedApiCall(pageIndex -> client.groupDescendants(groupId, true, MAX_GROUPS_PER_PAGE, pageIndex));
     }
 
     private Flowable<GitlabProject> getGroupProjects(String groupId) {
+        return paginatedApiCall(pageIndex -> client.groupProjects(groupId, true, MAX_GROUPS_PER_PAGE, pageIndex));
+    }
+
+    private <T> Flowable<T> paginatedApiCall(final Function<Integer, Flowable<HttpResponse<List<T>>>> apiCall) {
+        log.trace("Invoking paginated API");
+        final Flowable<HttpResponse<List<T>>> responses = paginatedApiCall(apiCall, 1);
+        return responses.map(response -> Option.of(response.body()))
+                        .filter(Option::isDefined)
+                        .map(Option::get)
+                        .flatMap(Flowable::fromIterable);
+    }
+
+    private <T> Flowable<HttpResponse<T>> paginatedApiCall(Function<Integer, Flowable<HttpResponse<T>>> apiCall, int pageIndex) {
         try {
-            return client.groupProjects(groupId).map(this::logProject);
+            final Flowable<HttpResponse<T>> page = apiCall.apply(pageIndex);
+            Flowable<HttpResponse<T>> nextPage = page.flatMap(response -> {
+                final String nextPageHeader = Objects.requireNonNullElse(response.getHeaders()
+                                                                                 .get(RESPONSE_HEADER_NEXT_PAGE), "0");
+                int nextPageIndex;
+                if (!nextPageHeader.isBlank() && (nextPageIndex = Integer.parseInt(nextPageHeader)) > 1) {
+                    log.trace("Making recursive call to fetch (next) page {}", nextPageIndex);
+                    return apiCall.apply(nextPageIndex);
+                }
+                log.trace("No more pages");
+                return Flowable.empty();
+            });
+            return Flowable.concat(page, nextPage);
         } catch (HttpClientException e) {
             log.error("GitLab API call failed: {}", e.getMessage());
             return Flowable.empty();

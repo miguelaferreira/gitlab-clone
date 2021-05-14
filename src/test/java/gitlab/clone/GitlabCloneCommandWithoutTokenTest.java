@@ -1,14 +1,15 @@
 package gitlab.clone;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+
 import ch.qos.logback.core.joran.spi.JoranException;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
+import org.assertj.core.api.AbstractStringAssert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 
 public class GitlabCloneCommandWithoutTokenTest extends GitlabCloneCommandBase {
 
@@ -36,8 +37,6 @@ public class GitlabCloneCommandWithoutTokenTest extends GitlabCloneCommandBase {
         }
     }
 
-
-    // needs to fail with group not found
     @Test
     public void run_privateGroup_withoutRecursion_veryVerbose() {
         ByteArrayOutputStream baos = redirectOutput();
@@ -46,8 +45,9 @@ public class GitlabCloneCommandWithoutTokenTest extends GitlabCloneCommandBase {
             String[] args = new String[]{"-x", PRIVATE_GROUP_NAME, cloneDirectory.toPath().toString()};
             PicocliRunner.run(GitlabCloneCommand.class, ctx, args);
 
-            assertLogsTrace(baos.toString(), PRIVATE_GROUP_NAME);
-            assertCloneContentsPrivateGroup(cloneDirectory);
+            final AbstractStringAssert<?> testAssert = assertLogsTrace(baos.toString(), PRIVATE_GROUP_NAME);
+            assertLogsTraceWhenGroupNotFound(testAssert, PRIVATE_GROUP_NAME);
+            assertNotCloned(cloneDirectory);
         }
     }
 }
