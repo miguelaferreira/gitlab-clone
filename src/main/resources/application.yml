@@ -6,6 +6,7 @@ micronaut:
   http:
     client:
       http-version: 2.0
+      read-timeout: 60s
 
 gitlab:
   url: "https://gitlab.com"

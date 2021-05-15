@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 public class GitlabService {
 
-    public static final int MAX_GROUPS_PER_PAGE = 100;
+    public static final int MAX_GROUPS_PER_PAGE = 20;
     public static final String RESPONSE_HEADER_NEXT_PAGE = "X-Next-Page";
     private final GitlabClient client;
 
@@ -42,10 +42,12 @@ public class GitlabService {
     }
 
     private Flowable<GitlabGroup> getSubGroups(String groupId) {
+        log.trace("Retrieving group '{}' sub-groups", groupId);
         return paginatedApiCall(pageIndex -> client.groupDescendants(groupId, true, MAX_GROUPS_PER_PAGE, pageIndex));
     }
 
     private Flowable<GitlabProject> getGroupProjects(String groupId) {
+        log.trace("Retrieving group '{}' projects", groupId);
         return paginatedApiCall(pageIndex -> client.groupProjects(groupId, true, MAX_GROUPS_PER_PAGE, pageIndex));
     }
 
