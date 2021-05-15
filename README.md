@@ -25,7 +25,7 @@ brew install miguelaferreira/tools/gitlab-clone
 
 Both the gitlab url (`GITLAB_URL`) and the private token (`GITLAB_TOKEN`) for accessing GitLab API are read from the environment.
 The GitLab url defaults to [https://gitlab.com](https://gitlab.com) when not defined in the environment.
-For cloning public groups the token needs `read_api` scope and for private groups it needs the `api` scope.
+For cloning public groups no token is needed, for private groups a token with scope `read_api` is required.
 See GitLab's [Limiting scopes of a personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#limiting-scopes-of-a-personal-access-token)
 for more details on token scopes.
 
@@ -37,31 +37,28 @@ Clone an entire GitLab group with all sub-groups and repositories.
 While cloning initialize project git sub-modules (may require two runs due to ordering of projects).
 When a project is already cloned, tries to initialize git sub-modules.
 
-gitlab-clone [-hvVx] [--debug] [--trace] GROUP PATH
+gitlab-clone [-hrvVx] [--debug] [--trace] GROUP PATH
 
 GitLab configuration:
 
-The GitLab URL and private token are read from the environment, using GITLAB_URL and GITLAB_TOKEN
-variables.
+The GitLab URL and private token are read from the environment, using GITLAB_URL and GITLAB_TOKEN variables.
 GITLAB_URL defaults to 'https://gitlab.com'.
-The token in GITLAB_TOKEN needs 'read_api' scope for public groups and 'api' scope for private
-groups.
+The token in GITLAB_TOKEN needs 'read_api' scope for public groups and 'api' scope for private groups.
 
 Parameters:
-      GROUP            The GitLab group to clone.
-      PATH             The local path where to create the group clone.
+      GROUP                  The GitLab group to clone.
+      PATH                   The local path where to create the group clone.
 
 Options:
-  -h, --help           Show this help message and exit.
-  -V, --version        Print version information and exit.
-  -v, --verbose        Print out extra information about what the tool is doing.
-  -x, --very-verbose   Print out even more information about what the tool is doing.
-      --debug          Sets all loggers to DEBUG level.
-      --trace          Sets all loggers to TRACE level. WARNING: this setting will leak the GitLab
-                         token to the logs, use with caution.
+  -h, --help                 Show this help message and exit.
+  -V, --version              Print version information and exit.
+  -r, --recurse-submodules   Initialize project submodules. If projects are already cloned try and initialize sub-modules anyway.
+  -v, --verbose              Print out extra information about what the tool is doing.
+  -x, --very-verbose         Print out even more information about what the tool is doing.
+      --debug                Sets all loggers to DEBUG level.
+      --trace                Sets all loggers to TRACE level. WARNING: this setting will leak the GitLab token to the logs, use with caution.
 
 Copyright(c) 2021 - Miguel Ferreira - GitHub/GitLab: @miguelaferreira
-
 ```
 
 ## Development

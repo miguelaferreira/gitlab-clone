@@ -44,11 +44,11 @@ jobs:
       - name: "[${{ runner.os }}] Gradle build"
         run: ./gradlew build nativeImage
         env:
-          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_TOKEN: ${{ secrets.BOT_GITLAB_TOKEN_READ_API }}
       - name: "[${{ runner.os }}] Run and test native image"
         run: .github/scripts/run-native-binary.sh
         env:
-          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_TOKEN: ${{ secrets.BOT_GITLAB_TOKEN_READ_API }}
       - name: "[${{ runner.os }}] Clean up"
         if: ${{ always() }}
         run: sudo rm -rf ~/.ssh

@@ -3,8 +3,10 @@ package gitlab.clone;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.Introspected;
+import lombok.ToString;
 
 @Introspected
+@ToString
 public class GitlabGroup {
     private String id;
     private String name;

@@ -1,20 +1,24 @@
 package gitlab.clone;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.logging.LogLevel;
-import io.micronaut.logging.LoggingSystem;
-import io.reactivex.Flowable;
-import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jgit.api.Git;
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-
 import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
+
+import ch.qos.logback.core.joran.spi.JoranException;
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.logging.LogLevel;
+import io.micronaut.logging.LoggingSystem;
+import io.reactivex.Flowable;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import io.vavr.control.Either;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jgit.api.Git;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 @Slf4j
 @Command(
@@ -46,27 +50,35 @@ public class GitlabCloneCommand implements Runnable {
 
     @Option(
             order = 0,
+            names = {"-r", "--recurse-submodules"},
+            description = "Initialize project submodules. If projects are already cloned try and initialize sub-modules anyway.",
+            defaultValue = "false"
+    )
+    private boolean recurseSubmodules;
+
+    @Option(
+            order = 1,
             names = {"-v", "--verbose"},
             description = "Print out extra information about what the tool is doing."
     )
     private boolean verbose;
 
     @Option(
-            order = 1,
+            order = 2,
             names = {"-x", "--very-verbose"},
             description = "Print out even more information about what the tool is doing."
     )
     private boolean veryVerbose;
 
     @Option(
-            order = 2,
+            order = 3,
             names = {"--debug"},
             description = "Sets all loggers to DEBUG level."
     )
     private boolean debug;
 
     @Option(
-            order = 3,
+            order = 4,
             names = {"--trace"},
             description = "Sets all loggers to TRACE level. WARNING: this setting will leak the GitLab token to the logs, use with caution."
     )
@@ -91,7 +103,7 @@ public class GitlabCloneCommand implements Runnable {
     @Inject
     GitlabService gitlabService;
     @Inject
-    CloningService cloningService;
+    GitService gitService;
     @Inject
     LoggingSystem loggingSystem;
 
@@ -101,38 +113,53 @@ public class GitlabCloneCommand implements Runnable {
 
     @Override
     public void run() {
-        if (trace) {
-            LoggerUtils.disableDefaultAppender();
-            loggingSystem.setLogLevel("root", LogLevel.TRACE);
-            loggingSystem.setLogLevel("gitlab.clone", LogLevel.TRACE);
-            log.trace("All loggers set to 'TRACE'");
-        } else if (debug) {
-            LoggerUtils.disableDefaultAppender();
-            loggingSystem.setLogLevel("root", LogLevel.DEBUG);
-            loggingSystem.setLogLevel("gitlab.clone", LogLevel.DEBUG);
-            log.debug("All loggers set to 'DEBUG'");
-        } else if (veryVerbose) {
-            LoggerUtils.disableFullAppender();
-            loggingSystem.setLogLevel("gitlab.clone", LogLevel.TRACE);
-            log.trace("Set 'gitlab.clone' logger to TRACE");
-        } else if (verbose) {
-            LoggerUtils.disableFullAppender();
-            loggingSystem.setLogLevel("gitlab.clone", LogLevel.DEBUG);
-            log.debug("Set 'gitlab.clone' logger to DEBUG");
-        } else {
-            LoggerUtils.disableFullAppender();
+        try {
+            if (trace) {
+                LoggingConfiguration.configureLoggers(loggingSystem, LogLevel.TRACE, true);
+                log.trace("Set all loggers to TRACE");
+            } else if (debug) {
+                LoggingConfiguration.configureLoggers(loggingSystem, LogLevel.DEBUG, true);
+                log.debug("Set all loggers to DEBUG");
+            } else if (veryVerbose) {
+                LoggingConfiguration.configureLoggers(loggingSystem, LogLevel.TRACE, false);
+                log.trace("Set application loggers to TRACE");
+            } else if (verbose) {
+                LoggingConfiguration.configureLoggers(loggingSystem, LogLevel.DEBUG, false);
+                log.debug("Set application loggers to DEBUG");
+            } else {
+                LoggingConfiguration.configureLoggers(loggingSystem, LogLevel.INFO, false);
+            }
+        } catch (JoranException e) {
+            System.out.println("ERROR: failed to configure loggers.");
         }
 
         log.debug("gitlab-clone {}", String.join("", new AppVersionProvider().getVersion()));
 
         log.info("Cloning group '{}'", gitlabGroupName);
-        final Flowable<Git> operations = gitlabService.searchGroups(gitlabGroupName, true)
-                                                      .map(group -> gitlabService.getGitlabGroupProjects(group))
-                                                      .flatMap(projects -> cloningService.cloneProjects(projects, localPath));
+        final Either<String, GitlabGroup> maybeGroup = gitlabService.findGroupByName(gitlabGroupName);
+        if (maybeGroup.isLeft()) {
+            log.info("Could not find group '{}': {}", gitlabGroupName, maybeGroup.getLeft());
+            return;
+        }
 
-        // have to consume all elements of iterable for the code to execute
-        operations.blockingIterable()
-                  .forEach(gitRepo -> log.trace("Done with: {}", gitRepo));
+        final GitlabGroup group = maybeGroup.get();
+        final Flowable<GitlabProject> groupProjects = gitlabService.getGitlabGroupProjects(group);
+        final Flowable<Tuple2<GitlabProject, GitlabProject>> projectsZip = groupProjects.map(project -> Tuple.of(project, project));
+        final Flowable<Tuple2<GitlabProject, Either<String, Git>>> clonedProjects = projectsZip.map(
+                tuple1 -> tuple1.map2(
+                        project -> recurseSubmodules ? gitService.cloneOrInitSubmodulesProject(project, localPath) : gitService.cloneProject(project, localPath))
+        );
+
+        clonedProjects.blockingIterable()
+                      .forEach(tuple -> {
+                          final GitlabProject project = tuple._1;
+                          final Either<String, Git> gitRepoOrError = tuple._2;
+                          if (gitRepoOrError.isLeft()) {
+                              log.warn(gitRepoOrError.getLeft());
+                          } else {
+                              log.info("Project '{}' updated.", project.getNameWithNamespace());
+                          }
+                      });
 
         log.info("All done");
     }
@@ -142,12 +169,13 @@ public class GitlabCloneCommand implements Runnable {
         @Override
         public String[] getVersion() {
             final InputStream in = AppVersionProvider.class.getResourceAsStream("/VERSION");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            String version = reader.lines().collect(Collectors.joining());
-            return new String[]{
-                    "v" + version
-            };
+            if (in != null) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                String version = reader.lines().collect(Collectors.joining());
+                return new String[]{"v" + version};
+            } else {
+                return new String[]{"No version"};
+            }
         }
     }
-
 }
