@@ -1,13 +1,10 @@
 package gitlab.clone;
 
-import javax.inject.Inject;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.stream.Collectors;
-
 import ch.qos.logback.core.joran.spi.JoranException;
-import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.configuration.picocli.MicronautFactory;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.ApplicationContextBuilder;
+import io.micronaut.context.env.Environment;
 import io.micronaut.logging.LogLevel;
 import io.micronaut.logging.LoggingSystem;
 import io.reactivex.Flowable;
@@ -19,6 +16,12 @@ import org.eclipse.jgit.api.Git;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+
+import javax.inject.Inject;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Command(
@@ -33,7 +36,8 @@ import picocli.CommandLine.Option;
         description = {
                 "The GitLab URL and private token are read from the environment, using GITLAB_URL and GITLAB_TOKEN variables.",
                 "GITLAB_URL defaults to 'https://gitlab.com'.",
-                "The token in GITLAB_TOKEN needs 'read_api' scope for public groups and 'api' scope for private groups."
+                "The GitLab token is used for both querying the GitLab API and discover the group to clone and as the password for cloning using HTTPS.",
+                "No token is needed for public groups and repositories."
         },
         footer = {
                 "%nCopyright(c) 2021 - Miguel Ferreira - GitHub/GitLab: @miguelaferreira"
@@ -58,29 +62,46 @@ public class GitlabCloneCommand implements Runnable {
 
     @Option(
             order = 1,
+            names = {"-c", "--clone-protocol"},
+            description = "Chose the transport protocol used clone the project repositories. Valid values: ${COMPLETION-CANDIDATES}.",
+            defaultValue = "SSH"
+    )
+    private GitlabCloneProtocol cloneProtocol;
+
+    @Option(
+            order = 2,
+            names = {"-u", "--https-username"},
+            description = "The username to authenticate with when the HTTPS clone protocol is selected. This option is required when cloning private groups, in which case the GitLab token will be used as the password.",
+            arity = "0..1",
+            interactive = true
+    )
+    private String httpsUsername;
+
+    @Option(
+            order = 10,
             names = {"-v", "--verbose"},
             description = "Print out extra information about what the tool is doing."
     )
     private boolean verbose;
 
     @Option(
-            order = 2,
+            order = 11,
             names = {"-x", "--very-verbose"},
             description = "Print out even more information about what the tool is doing."
     )
     private boolean veryVerbose;
 
     @Option(
-            order = 3,
+            order = 12,
             names = {"--debug"},
             description = "Sets all loggers to DEBUG level."
     )
     private boolean debug;
 
     @Option(
-            order = 4,
+            order = 13,
             names = {"--trace"},
-            description = "Sets all loggers to TRACE level. WARNING: this setting will leak the GitLab token to the logs, use with caution."
+            description = "Sets all loggers to TRACE level. WARNING: this setting will leak the GitLab token or password to the logs, use with caution."
     )
     private boolean trace;
 
@@ -108,11 +129,58 @@ public class GitlabCloneCommand implements Runnable {
     LoggingSystem loggingSystem;
 
     public static void main(String[] args) {
-        PicocliRunner.run(GitlabCloneCommand.class, args);
+        final ApplicationContextBuilder builder = ApplicationContext.builder(GitlabCloneCommand.class, Environment.CLI);
+        try (ApplicationContext context = builder.start()) {
+            new CommandLine(GitlabCloneCommand.class, new MicronautFactory(context)).setCaseInsensitiveEnumValuesAllowed(true)
+                                                                                    .execute(args);
+        }
     }
 
     @Override
     public void run() {
+        configureLogging();
+        log.debug("gitlab-clone {}", String.join("", new AppVersionProvider().getVersion()));
+        configureGitService();
+        cloneGroup();
+    }
+
+    private void configureGitService() {
+        gitService.setCloneProtocol(cloneProtocol);
+        gitService.setHttpsUsername(httpsUsername);
+    }
+
+    private void cloneGroup() {
+        log.info("Cloning group '{}'", gitlabGroupName);
+        final Either<String, GitlabGroup> maybeGroup = gitlabService.findGroupByName(gitlabGroupName);
+        if (maybeGroup.isLeft()) {
+            log.info("Could not find group '{}': {}", gitlabGroupName, maybeGroup.getLeft());
+            return;
+        }
+
+        final GitlabGroup group = maybeGroup.get();
+        final Flowable<GitlabProject> groupProjects = gitlabService.getGitlabGroupProjects(group);
+        final Flowable<Tuple2<GitlabProject, GitlabProject>> projectsZip = groupProjects.map(project -> Tuple.of(project, project));
+        final Flowable<Tuple2<GitlabProject, Either<String, Git>>> clonedProjects = projectsZip.map(
+                tuple1 -> tuple1.map2(
+                        project -> recurseSubmodules ? gitService.cloneOrInitSubmodulesProject(project, localPath) : gitService
+                                .cloneProject(project, localPath))
+        );
+
+        clonedProjects.blockingIterable()
+                      .forEach(tuple -> {
+                          final GitlabProject project = tuple._1;
+                          final Either<String, Git> gitRepoOrError = tuple._2;
+                          if (gitRepoOrError.isLeft()) {
+                              log.warn(gitRepoOrError.getLeft());
+                          } else {
+                              log.info("Project '{}' updated.", project.getNameWithNamespace());
+                          }
+                      });
+
+        log.info("All done");
+    }
+
+    private void configureLogging() {
         try {
             if (trace) {
                 LoggingConfiguration.configureLoggers(loggingSystem, LogLevel.TRACE, true);
@@ -132,36 +200,6 @@ public class GitlabCloneCommand implements Runnable {
         } catch (JoranException e) {
             System.out.println("ERROR: failed to configure loggers.");
         }
-
-        log.debug("gitlab-clone {}", String.join("", new AppVersionProvider().getVersion()));
-
-        log.info("Cloning group '{}'", gitlabGroupName);
-        final Either<String, GitlabGroup> maybeGroup = gitlabService.findGroupByName(gitlabGroupName);
-        if (maybeGroup.isLeft()) {
-            log.info("Could not find group '{}': {}", gitlabGroupName, maybeGroup.getLeft());
-            return;
-        }
-
-        final GitlabGroup group = maybeGroup.get();
-        final Flowable<GitlabProject> groupProjects = gitlabService.getGitlabGroupProjects(group);
-        final Flowable<Tuple2<GitlabProject, GitlabProject>> projectsZip = groupProjects.map(project -> Tuple.of(project, project));
-        final Flowable<Tuple2<GitlabProject, Either<String, Git>>> clonedProjects = projectsZip.map(
-                tuple1 -> tuple1.map2(
-                        project -> recurseSubmodules ? gitService.cloneOrInitSubmodulesProject(project, localPath) : gitService.cloneProject(project, localPath))
-        );
-
-        clonedProjects.blockingIterable()
-                      .forEach(tuple -> {
-                          final GitlabProject project = tuple._1;
-                          final Either<String, Git> gitRepoOrError = tuple._2;
-                          if (gitRepoOrError.isLeft()) {
-                              log.warn(gitRepoOrError.getLeft());
-                          } else {
-                              log.info("Project '{}' updated.", project.getNameWithNamespace());
-                          }
-                      });
-
-        log.info("All done");
     }
 
     static class AppVersionProvider implements CommandLine.IVersionProvider {

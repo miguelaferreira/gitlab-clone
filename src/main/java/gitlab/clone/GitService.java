@@ -1,36 +1,40 @@
 package gitlab.clone;
 
-import javax.inject.Singleton;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileSystems;
-
-import com.jcraft.jsch.Session;
+import io.micronaut.context.annotation.Value;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.transport.JschConfigSessionFactory;
-import org.eclipse.jgit.transport.OpenSshConfig;
-import org.eclipse.jgit.transport.SshSessionFactory;
-import org.eclipse.jgit.transport.SshTransport;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+
+import javax.inject.Singleton;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.util.Objects;
 
 @Slf4j
 @Singleton
 public class GitService {
 
-    public static final SshSessionFactory SSH_SESSION_FACTORY = new JschConfigSessionFactory() {
-        @Override
-        protected void configure(OpenSshConfig.Host host, Session session) {
-            log.trace("ssh :: host = {}", host.getHostName());
-            log.trace("ssh :: port = {}", host.getPort());
-            log.trace("ssh :: preferred auth = {}", host.getPreferredAuthentications());
-            log.trace("ssh :: strict host key checking = {}", host.getStrictHostKeyChecking());
-            log.trace("ssh :: username = {}", session.getUserName());
-        }
-    };
+    private GitlabCloneProtocol cloneProtocol = GitlabCloneProtocol.SSH;
+    private String httpsUsername = "";
+    @Value("${gitlab.token:}")
+    private String httpsPassword = "";
+
+    public void setCloneProtocol(GitlabCloneProtocol cloneProtocol) {
+        this.cloneProtocol = cloneProtocol;
+    }
+
+    public void setHttpsUsername(String httpsUsername) {
+        this.httpsUsername = httpsUsername;
+    }
+
+    protected void setHttpsPassword(String httpsPassword) {
+        this.httpsPassword = httpsPassword;
+    }
 
     public Either<String, Git> cloneOrInitSubmodulesProject(GitlabProject project, String cloneDirectory) {
         final String projectName = project.getNameWithNamespace();
@@ -74,13 +78,23 @@ public class GitService {
         String pathToClone = cloneDirectory + FileSystems.getDefault().getSeparator() + project.getPathWithNamespace();
 
         final CloneCommand cloneCommand = Git.cloneRepository();
-        cloneCommand.setURI(project.getSshUrlToRepo());
+        switch (cloneProtocol) {
+            case SSH:
+                cloneCommand.setURI(project.getSshUrlToRepo());
+                break;
+            case HTTPS:
+                cloneCommand.setURI(project.getHttpUrlToRepo());
+                final String username = Objects.requireNonNullElse(httpsUsername, "");
+                final String password = Objects.requireNonNullElse(httpsPassword, "");
+                if (!username.isBlank() && !password.isBlank()) {
+                    cloneCommand.setCredentialsProvider(new UsernamePasswordCredentialsProvider(httpsUsername, httpsPassword));
+                } else {
+                    log.debug("Credentials for HTTPS remote not set, group to clone must be public.");
+                }
+                break;
+        }
         cloneCommand.setDirectory(new File(pathToClone));
         cloneCommand.setCloneSubmodules(cloneSubmodules);
-        cloneCommand.setTransportConfigCallback(transport -> {
-            SshTransport sshTransport = (SshTransport) transport;
-            sshTransport.setSshSessionFactory(SSH_SESSION_FACTORY);
-        });
 
         return cloneCommand.call();
     }

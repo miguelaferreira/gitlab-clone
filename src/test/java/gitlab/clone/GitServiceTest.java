@@ -1,13 +1,5 @@
 package gitlab.clone;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.eclipse.jgit.submodule.SubmoduleStatusType.INITIALIZED;
-import static org.eclipse.jgit.submodule.SubmoduleStatusType.UNINITIALIZED;
-
-import java.io.File;
-import java.util.List;
-import java.util.Map;
-
 import io.reactivex.Flowable;
 import io.vavr.collection.Stream;
 import io.vavr.control.Either;
@@ -19,11 +11,22 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.eclipse.jgit.submodule.SubmoduleStatusType.INITIALIZED;
+import static org.eclipse.jgit.submodule.SubmoduleStatusType.UNINITIALIZED;
+
 class GitServiceTest {
+
+    public static final String GITLAB_BOT_USERNAME = "devex-bot";
 
     @TempDir
     File cloneDirectory;
     private String cloneDirectoryPath;
+    private final String gitlabBotPassword = System.getenv("GITLAB_TOKEN");
 
     @BeforeEach
     void setUp() {
@@ -31,7 +34,7 @@ class GitServiceTest {
     }
 
     @Test
-    void cloneRepo_withSubmodule() throws GitAPIException {
+    void clonePublicRepo_ssh_withSubmodule() throws GitAPIException {
         final GitlabProject project = GitlabProject.builder()
                                                    .name("a-project")
                                                    .sshUrlToRepo("git@gitlab.com:gitlab-clone-example/a-project.git")
@@ -47,7 +50,57 @@ class GitServiceTest {
     }
 
     @Test
-    void cloneRepo_withoutSubmodule() throws GitAPIException {
+    void clonePublicRepo_http_withSubmodule() throws GitAPIException {
+        final GitService gitService = new GitService();
+        gitService.setCloneProtocol(GitlabCloneProtocol.HTTPS);
+        final GitlabProject project = GitlabProject.builder()
+                                                   .name("a-project")
+                                                   .httpUrlToRepo("https://gitlab.com/gitlab-clone-example/a-project.git")
+                                                   .nameWithNamespace("gitlab-clone-example / a-project")
+                                                   .pathWithNamespace("gitlab-clone-example/a-project")
+                                                   .build();
+
+        final Git repo = gitService.cloneProject(project, cloneDirectoryPath, true);
+
+        assertThat(repo.log().call()).isNotEmpty();
+        assertThat(repo.submoduleStatus().call()).containsKey("some-project-sub-module")
+                                                 .allSatisfy(this::submoduleIsInitialized);
+    }
+
+    @Test
+    void clonePrivateRepo_ssh_withSubmodule() throws GitAPIException {
+        final GitlabProject project = GitlabProject.builder()
+                                                   .name("a-private-project")
+                                                   .sshUrlToRepo("git@gitlab.com:gitlab-clone-example-private/a-private-project.git")
+                                                   .nameWithNamespace("gitlab-clone-example / a-private-project")
+                                                   .pathWithNamespace("gitlab-clone-example/a-private-project")
+                                                   .build();
+
+        final Git repo = new GitService().cloneProject(project, cloneDirectoryPath, true);
+
+        assertThat(repo.log().call()).isNotEmpty();
+    }
+
+    @Test
+    void clonePrivateRepo_http_withSubmodule() throws GitAPIException {
+        final GitService gitService = new GitService();
+        gitService.setCloneProtocol(GitlabCloneProtocol.HTTPS);
+        gitService.setHttpsUsername(GITLAB_BOT_USERNAME);
+        gitService.setHttpsPassword(gitlabBotPassword);
+        final GitlabProject project = GitlabProject.builder()
+                                                   .name("a-private-project")
+                                                   .httpUrlToRepo("https://gitlab.com/gitlab-clone-example-private/a-private-project.git")
+                                                   .nameWithNamespace("gitlab-clone-example / a-private-project")
+                                                   .pathWithNamespace("gitlab-clone-example/a-private-project")
+                                                   .build();
+
+        final Git repo = gitService.cloneProject(project, cloneDirectoryPath, true);
+
+        assertThat(repo.log().call()).isNotEmpty();
+    }
+
+    @Test
+    void clonePublicRepo_ssh_withoutSubmodule() throws GitAPIException {
         final GitlabProject project = GitlabProject.builder()
                                                    .name("a-project")
                                                    .sshUrlToRepo("git@gitlab.com:gitlab-clone-example/a-project.git")
@@ -63,7 +116,7 @@ class GitServiceTest {
     }
 
     @Test
-    void testCloneRepositories_freshClone_withSubmodules() throws GitAPIException {
+    void testClonePublicRepositories_ssh_freshClone_withSubmodules() throws GitAPIException {
         final GitService gitService = new GitService();
         Flowable<GitlabProject> projects = Flowable.just(
                 GitlabProject.builder()
@@ -95,7 +148,7 @@ class GitServiceTest {
     }
 
     @Test
-    void testCloneOrInitSubmodulesProject_existingClone_withSubmodules() throws GitAPIException {
+    void testCloneOrInitSubmodulesPublicRepos_ssh_existingClone_withSubmodules() throws GitAPIException {
         final GitService gitService = new GitService();
         Flowable<GitlabProject> projects = Flowable.just(
                 GitlabProject.builder()
@@ -143,7 +196,7 @@ class GitServiceTest {
     }
 
     @Test
-    void testCloneOrInitSubmodulesProject_existingClone_withoutSubmodules() throws GitAPIException {
+    void testCloneOrInitSubmodulesPublicRepos_ssh_existingClone_withoutSubmodules() throws GitAPIException {
         final GitService gitService = new GitService();
         Flowable<GitlabProject> projects = Flowable.just(
                 GitlabProject.builder()
