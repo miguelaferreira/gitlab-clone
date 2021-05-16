@@ -255,6 +255,10 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"gitlab.clone.GitService",
+  "fields":[{"name":"httpsPassword"}]
+},
+{
   "name":"gitlab.clone.GitlabCloneCommand",
   "allDeclaredFields":true,
   "allDeclaredMethods":true
@@ -961,7 +965,7 @@
 },
 {
   "name":"io.netty.buffer.AbstractReferenceCountedByteBuf",
-  "fields":[{"name":"refCnt", "allowUnsafeAccess":true}]
+  "fields":[{"name":"refCnt"}]
 },
 {
   "name":"io.netty.channel.ChannelDuplexHandler",
@@ -1115,27 +1119,27 @@
 },
 {
   "name":"io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueColdProducerFields",
-  "fields":[{"name":"producerLimit", "allowUnsafeAccess":true}]
+  "fields":[{"name":"producerLimit"}]
 },
 {
   "name":"io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueConsumerFields",
-  "fields":[{"name":"consumerIndex", "allowUnsafeAccess":true}]
+  "fields":[{"name":"consumerIndex"}]
 },
 {
   "name":"io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueProducerFields",
-  "fields":[{"name":"producerIndex", "allowUnsafeAccess":true}]
+  "fields":[{"name":"producerIndex"}]
 },
 {
   "name":"io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueConsumerIndexField",
-  "fields":[{"name":"consumerIndex", "allowUnsafeAccess":true}]
+  "fields":[{"name":"consumerIndex"}]
 },
 {
   "name":"io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerIndexField",
-  "fields":[{"name":"producerIndex", "allowUnsafeAccess":true}]
+  "fields":[{"name":"producerIndex"}]
 },
 {
   "name":"io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerLimitField",
-  "fields":[{"name":"producerLimit", "allowUnsafeAccess":true}]
+  "fields":[{"name":"producerLimit"}]
 },
 {
   "name":"io.reactivex.Completable"
@@ -1158,6 +1162,14 @@
   "allDeclaredMethods":true
 },
 {
+  "name":"java.lang.ProcessBuilder",
+  "methods":[{"name":"redirectError","parameterTypes":["java.lang.ProcessBuilder$Redirect"] }]
+},
+{
+  "name":"java.lang.ProcessBuilder$Redirect",
+  "fields":[{"name":"INHERIT"}]
+},
+{
   "name":"java.lang.RuntimePermission"
 },
 {
@@ -1165,6 +1177,14 @@
 },
 {
   "name":"java.lang.String[]"
+},
+{
+  "name":"java.lang.System",
+  "methods":[{"name":"console","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.Throwable",
+  "methods":[{"name":"getSuppressed","parameterTypes":[] }]
 },
 {
   "name":"java.lang.management.ManagementFactory",
@@ -1193,7 +1213,7 @@
 },
 {
   "name":"java.nio.Buffer",
-  "fields":[{"name":"address", "allowUnsafeAccess":true}]
+  "fields":[{"name":"address"}]
 },
 {
   "name":"java.nio.DirectByteBuffer",
@@ -1400,8 +1420,8 @@
 {
   "name":"sun.nio.ch.SelectorImpl",
   "fields":[
-    {"name":"publicSelectedKeys", "allowUnsafeAccess":true}, 
-    {"name":"selectedKeys", "allowUnsafeAccess":true}
+    {"name":"publicSelectedKeys"}, 
+    {"name":"selectedKeys"}
   ]
 },
 {
@@ -1473,6 +1493,14 @@
 },
 {
   "name":"sun.security.rsa.RSASignature$SHA224withRSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.KeyManagerFactoryImpl$SunX509",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.ssl.SSLContextImpl$DefaultSSLContext",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
