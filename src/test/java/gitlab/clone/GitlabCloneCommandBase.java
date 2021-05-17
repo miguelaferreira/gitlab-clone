@@ -1,6 +1,9 @@
 package gitlab.clone;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
+import org.assertj.core.api.AbstractFileAssert;
+import org.assertj.core.api.AbstractStringAssert;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -8,10 +11,7 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Map;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import org.assertj.core.api.AbstractFileAssert;
-import org.assertj.core.api.AbstractStringAssert;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class GitlabCloneCommandBase {
     public static final String PUBLIC_GROUP_NAME = "gitlab-clone-example";
@@ -48,7 +48,6 @@ public class GitlabCloneCommandBase {
                           .contains(String.format("] DEBUG gitlab.clone.GitlabService - Looking for group named: %s", groupName))
                           .contains(String.format("] DEBUG gitlab.clone.GitlabService - Searching for projects in group '%s'", groupName))
                           .contains("] TRACE gitlab.clone.GitlabService - Invoking paginated API")
-                          .contains("] TRACE gitlab.clone.GitService - ssh :: ")
                           .contains("] INFO  gitlab.clone.GitlabCloneCommand - All done")
                           .contains("PRIVATE-TOKEN");
     }
@@ -73,7 +72,6 @@ public class GitlabCloneCommandBase {
     public AbstractStringAssert<?> assertLogsTraceWhenGroupFound(AbstractStringAssert<?> testAssert, String groupName) {
         return testAssert.contains(String.format("Searching for projects in group '%s'", groupName))
                          .contains("Invoking paginated API")
-                         .contains("ssh :: ")
                          .contains("All done")
                          .doesNotContain("PRIVATE-TOKEN")
                          .doesNotContain("gitlab.clone.GitlabCloneCommand");
