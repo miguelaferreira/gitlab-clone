@@ -62,12 +62,6 @@ java {
     targetCompatibility = JavaVersion.toVersion("11")
 }
 
-run {
-    moduleOptions {
-        addOpens = ['jdk.compiler/com.sun.tools.javac.processing': 'ALL-UNNAMED']
-    }
-}
-
 test {
     environment "GITLAB_TOKEN", System.getenv('GITLAB_TOKEN')
     moduleOptions {
