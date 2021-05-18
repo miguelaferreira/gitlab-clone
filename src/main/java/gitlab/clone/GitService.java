@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.transport.SshSessionFactory;
+import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import javax.inject.Singleton;
@@ -18,6 +20,8 @@ import java.util.Objects;
 @Slf4j
 @Singleton
 public class GitService {
+
+    private static final SshSessionFactory sshSessionFactory = new OverrideJschConfigSessionFactory();
 
     private GitlabCloneProtocol cloneProtocol = GitlabCloneProtocol.SSH;
     private String httpsUsername = "";
@@ -79,10 +83,14 @@ public class GitService {
 
         final CloneCommand cloneCommand = Git.cloneRepository();
         switch (cloneProtocol) {
-            case SSH:
+            case SSH -> {
                 cloneCommand.setURI(project.getSshUrlToRepo());
-                break;
-            case HTTPS:
+                cloneCommand.setTransportConfigCallback(transport -> {
+                    SshTransport sshTransport = (SshTransport) transport;
+                    sshTransport.setSshSessionFactory(sshSessionFactory);
+                });
+            }
+            case HTTPS -> {
                 cloneCommand.setURI(project.getHttpUrlToRepo());
                 final String username = Objects.requireNonNullElse(httpsUsername, "");
                 final String password = Objects.requireNonNullElse(httpsPassword, "");
@@ -91,7 +99,7 @@ public class GitService {
                 } else {
                     log.debug("Credentials for HTTPS remote not set, group to clone must be public.");
                 }
-                break;
+            }
         }
         cloneCommand.setDirectory(new File(pathToClone));
         cloneCommand.setCloneSubmodules(cloneSubmodules);
