@@ -1,5 +1,9 @@
 [
 {
+  "name":"apple.security.AppleProvider",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"byte[]"
 },
 {
@@ -83,6 +87,14 @@
   "name":"com.fasterxml.jackson.databind.ser.Serializers[]"
 },
 {
+  "name":"com.jcraft.jsch.DH25519",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.DH448",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"com.jcraft.jsch.DHEC256",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -99,6 +111,26 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"com.jcraft.jsch.DHG14256",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.DHG15",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.DHG16",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.DHG17",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.DHG18",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"com.jcraft.jsch.UserAuthNone",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -107,15 +139,11 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.jcraft.jsch.jce.AES128CBC",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"com.jcraft.jsch.jce.AES128CTR",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.jcraft.jsch.jce.AES192CBC",
+  "name":"com.jcraft.jsch.jce.AES128GCM",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -123,11 +151,11 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.jcraft.jsch.jce.AES256CBC",
+  "name":"com.jcraft.jsch.jce.AES256CTR",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.jcraft.jsch.jce.AES256CTR",
+  "name":"com.jcraft.jsch.jce.AES256GCM",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -143,7 +171,19 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.jcraft.jsch.jce.MD5",
+  "name":"com.jcraft.jsch.jce.HMACSHA256",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.jce.HMACSHA256ETM",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.jce.HMACSHA512",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.jcraft.jsch.jce.HMACSHA512ETM",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -179,23 +219,15 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.jcraft.jsch.jce.SignatureRSA",
+  "name":"com.jcraft.jsch.jce.SignatureRSASHA256",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.jcraft.jsch.jce.TripleDESCTR",
+  "name":"com.jcraft.jsch.jce.SignatureRSASHA512",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"com.sun.crypto.provider.AESCipher$General",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.sun.crypto.provider.DESedeCipher",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"com.sun.crypto.provider.DESedeKeyFactory",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -215,7 +247,7 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"com.sun.crypto.provider.HmacSHA1",
+  "name":"com.sun.crypto.provider.HmacCore$HmacSHA512",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -248,6 +280,10 @@
 },
 {
   "name":"gitlab.clone.$GitlabServiceDefinitionClass",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"gitlab.clone.$GitlabVersion$IntrospectionRef",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -1158,6 +1194,14 @@
   "allDeclaredMethods":true
 },
 {
+  "name":"java.lang.ProcessBuilder",
+  "methods":[{"name":"redirectError","parameterTypes":["java.lang.ProcessBuilder$Redirect"] }]
+},
+{
+  "name":"java.lang.ProcessBuilder$Redirect",
+  "fields":[{"name":"INHERIT"}]
+},
+{
   "name":"java.lang.RuntimePermission"
 },
 {
@@ -1432,15 +1476,7 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"sun.security.provider.JavaKeyStore$DualFormatJKS",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"sun.security.provider.JavaKeyStore$JKS",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.provider.MD5",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -1472,10 +1508,6 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"sun.security.provider.certpath.PKIXCertPathValidator",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"sun.security.rsa.RSAKeyFactory$Legacy",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -1484,19 +1516,11 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"sun.security.rsa.RSASignature$SHA1withRSA",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"sun.security.rsa.RSASignature$SHA224withRSA",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"sun.security.rsa.RSASignature$SHA256withRSA",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.rsa.RSASignature$SHA384withRSA",
+  "name":"sun.security.rsa.RSASignature$SHA512withRSA",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
