@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.transport.SshSessionFactory;
+import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import javax.inject.Singleton;
@@ -18,6 +20,8 @@ import java.util.Objects;
 @Slf4j
 @Singleton
 public class GitService {
+
+    private static final SshSessionFactory sshSessionFactory = new OverrideJschConfigSessionFactory();
 
     private GitlabCloneProtocol cloneProtocol = GitlabCloneProtocol.SSH;
     private String httpsUsername = "";
@@ -81,6 +85,10 @@ public class GitService {
         switch (cloneProtocol) {
             case SSH:
                 cloneCommand.setURI(project.getSshUrlToRepo());
+                cloneCommand.setTransportConfigCallback(transport -> {
+                    SshTransport sshTransport = (SshTransport) transport;
+                    sshTransport.setSshSessionFactory(sshSessionFactory);
+                });
                 break;
             case HTTPS:
                 cloneCommand.setURI(project.getHttpUrlToRepo());

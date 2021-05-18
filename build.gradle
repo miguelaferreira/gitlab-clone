@@ -1,6 +1,7 @@
 plugins {
-    id("com.github.johnrengelman.shadow") version "6.1.0"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
     id("io.micronaut.application") version "1.4.2"
+    id 'org.javamodularity.moduleplugin' version '1.8.3'
 }
 
 version = rootProject.file('VERSION').text.trim()
@@ -19,9 +20,8 @@ micronaut {
 }
 
 dependencies {
-
-    compileOnly 'org.projectlombok:lombok:1.18.16'
-    annotationProcessor 'org.projectlombok:lombok:1.18.16'
+    compileOnly 'org.projectlombok:lombok:1.18.20'
+    annotationProcessor 'org.projectlombok:lombok:1.18.20'
 
     annotationProcessor("info.picocli:picocli-codegen")
     implementation("info.picocli:picocli")
@@ -38,12 +38,18 @@ dependencies {
     implementation 'io.vavr:vavr:0.10.3'
 
     implementation 'org.eclipse.jgit:org.eclipse.jgit:5.11.0.202103091610-r'
-    implementation 'org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:5.11.0.202103091610-r'
+    implementation('org.eclipse.jgit:org.eclipse.jgit.ssh.jsch:5.11.0.202103091610-r') {
+        exclude module: 'jsch'
+    }
 
-    testCompileOnly 'org.projectlombok:lombok:1.18.16'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.16'
+    implementation 'com.github.mwiede:jsch:0.1.62'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.20'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
     testImplementation 'org.assertj:assertj-core:3.11.1'
     testImplementation 'org.assertj:assertj-vavr:0.4.1'
+
+    testImplementation("org.junit.jupiter:junit-jupiter-engine") // make gradle compileTestJava work
 }
 
 application {
@@ -51,16 +57,24 @@ application {
 }
 
 java {
+    modularity.inferModulePath.set(true)
     sourceCompatibility = JavaVersion.toVersion("11")
     targetCompatibility = JavaVersion.toVersion("11")
 }
 
 test {
     environment "GITLAB_TOKEN", System.getenv('GITLAB_TOKEN')
-//    maxHeapSize = "1G"
-//    forkEvery = 1
+    moduleOptions {
+        runOnClasspath = true
+    }
 }
 
 processResources {
     from("VERSION")
 }
+
+modularity.patchModule('java.annotation', 'jsr305-3.0.2.jar')
+modularity.patchModule('org.eclipse.jgit', 'org.eclipse.jgit.ssh.jsch-5.11.0.202103091610-r.jar')
+modularity.patchModule('io.micronaut.runtime', 'micronaut-context-2.5.0.jar')
+
+mainClassName = "$moduleName/gitlab.clone.GitlabCloneCommand"
