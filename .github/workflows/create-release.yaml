@@ -21,12 +21,12 @@ jobs:
           path: |
             ~/.gradle
             ${GITHUB_WORKSPACE}/.gradle
-          key: ${{ matrix.os }}-gitlab-clone-release-java16
+          key: ${{ matrix.os }}-gitlab-clone-release-java11
       - name: "[${{ runner.os }}] Install GraalVM"
         uses: DeLaGuardo/setup-graalvm@4.0
         with:
           graalvm: '21.1.0'
-          java: 'java16'
+          java: 'java11'
           arch: 'amd64'
       - name: "[${{ runner.os }}] Install native-image"
         run: gu install native-image

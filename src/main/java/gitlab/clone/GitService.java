@@ -83,14 +83,14 @@ public class GitService {
 
         final CloneCommand cloneCommand = Git.cloneRepository();
         switch (cloneProtocol) {
-            case SSH -> {
+            case SSH:
                 cloneCommand.setURI(project.getSshUrlToRepo());
                 cloneCommand.setTransportConfigCallback(transport -> {
                     SshTransport sshTransport = (SshTransport) transport;
                     sshTransport.setSshSessionFactory(sshSessionFactory);
                 });
-            }
-            case HTTPS -> {
+                break;
+            case HTTPS:
                 cloneCommand.setURI(project.getHttpUrlToRepo());
                 final String username = Objects.requireNonNullElse(httpsUsername, "");
                 final String password = Objects.requireNonNullElse(httpsPassword, "");
@@ -99,7 +99,7 @@ public class GitService {
                 } else {
                     log.debug("Credentials for HTTPS remote not set, group to clone must be public.");
                 }
-            }
+                break;
         }
         cloneCommand.setDirectory(new File(pathToClone));
         cloneCommand.setCloneSubmodules(cloneSubmodules);
