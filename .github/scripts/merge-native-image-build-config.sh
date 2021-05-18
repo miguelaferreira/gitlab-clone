@@ -20,7 +20,7 @@ mkdir -p "${output_dir}"
 
 say "Merging native-image build config"
 input_dirs=""
-for config_dir in ${native_image_config_dir}/*/*; do
+for config_dir in "${native_image_config_dir}"/*/*; do
   input_dirs+="--input-dir=${config_dir} "
 done
 
