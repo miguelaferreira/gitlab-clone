@@ -29,7 +29,7 @@ class GitlabClientWithoutTokenTest {
     private GitlabClient client;
 
     @Test
-    void searchGroups_privateGroup() {
+    void searchGroups_privateGroup_withoutToken() {
         final Flowable<HttpResponse<List<GitlabGroup>>> groups = client.searchGroups(PRIVATE_GROUP_NAME, true, 10, 1);
 
         final Iterable<HttpResponse<List<GitlabGroup>>> iterable = groups.blockingIterable();
@@ -95,5 +95,12 @@ class GitlabClientWithoutTokenTest {
         final HttpClientException e = assertThrows(HttpClientException.class, groups::blockingFirst);
 
         assertThat(e).hasMessage("404 Group Not Found");
+    }
+
+    @Test
+    void getVersion() {
+        final HttpClientResponseException responseException = assertThrows(HttpClientResponseException.class, () -> client.version());
+
+        assertThat(responseException.getStatus().getCode()).isEqualTo(401);
     }
 }

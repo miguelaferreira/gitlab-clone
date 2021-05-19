@@ -1,9 +1,6 @@
 package gitlab.clone;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import org.assertj.core.api.AbstractFileAssert;
-import org.assertj.core.api.AbstractStringAssert;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -11,9 +8,13 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
+import org.assertj.core.api.AbstractFileAssert;
+import org.assertj.core.api.AbstractStringAssert;
 
 public class GitlabCloneCommandBase {
+
     public static final String PUBLIC_GROUP_NAME = "gitlab-clone-example";
     public static final String PRIVATE_GROUP_NAME = "gitlab-clone-example-private";
     public static final int TEST_OUTPUT_ARRAY_SIZE = 4096000;
