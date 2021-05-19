@@ -73,7 +73,7 @@ The tool supports both SSH and HTTPS protocols for cloning projects, SSH being t
 
 #### SSH
 
-There are two requirements for cloning via SSH that apply to both public and private groups:
+There are three requirements for cloning via SSH that apply to both public and private groups:
 
 1. A known hosts file containing and entry for the GitLab server must exist in the default
    location (`${HOME}/.ssh/known_hosts`). This entry looks something like
@@ -82,6 +82,10 @@ There are two requirements for cloning via SSH that apply to both public and pri
    an entry for the GitLab server in the ssh client configuration that points to the correct key.
    See [GitLab documentation on configuring SSH access](https://docs.gitlab.com/ee/ssh/) for more information on how to
    set this up
+3. The private key must be in the PEM format, the keyfile needs to start with the line:
+   `-----BEGIN RSA PRIVATE KEY-----`
+   _Note: Support for the OpenSSH key format will be available once a native binary can be produced with a Java15
+   GraalVM native-image. See Issue #16 to track progress of this_
 
 Cloning via HTTPS (cli option `--clone-protocol=HTTPS`) does not require any setup for public groups. For private
 groups, the username needs to be provided (cli option `--https-username=<USERNAME>`). The GitLab token specified on the
