@@ -1,5 +1,6 @@
 [![Continuous Integration](https://github.com/miguelaferreira/gitlab-clone/actions/workflows/development.yml/badge.svg)](https://github.com/miguelaferreira/gitlab-clone/actions/workflows/development.yml)
 [![Continuous Delivery](https://github.com/miguelaferreira/gitlab-clone/actions/workflows/create-release.yaml/badge.svg)](https://github.com/miguelaferreira/gitlab-clone/actions/workflows/create-release.yaml)
+[![Known Vulnerabilities](https://snyk.io/test/github/miguelaferreira/gitlab-clone/badge.svg)](https://snyk.io/test/github/miguelaferreira/gitlab-clone)
 
 ## GitLab Clone
 
