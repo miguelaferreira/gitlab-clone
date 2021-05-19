@@ -27,6 +27,14 @@ public interface GitlabClient {
             @QueryValue int page
     );
 
+    @Get("/groups/{id}/subgroups{?all_available,per_page,page}")
+    Flowable<HttpResponse<List<GitlabGroup>>> groupSubGroups(
+            @PathVariable String id,
+            @QueryValue(value = "all_available") boolean allAvailable,
+            @QueryValue(value = "per_page") int perPage,
+            @QueryValue int page
+    );
+
     @Get("/groups/{id}/descendant_groups{?all_available,per_page,page}")
     Flowable<HttpResponse<List<GitlabGroup>>> groupDescendants(
             @PathVariable String id,

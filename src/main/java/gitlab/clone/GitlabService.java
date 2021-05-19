@@ -1,10 +1,5 @@
 package gitlab.clone;
 
-import javax.inject.Singleton;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
-
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.client.exceptions.HttpClientException;
 import io.reactivex.Flowable;
@@ -12,12 +7,18 @@ import io.vavr.control.Either;
 import io.vavr.control.Option;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.inject.Singleton;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+
 @Slf4j
 @Singleton
 public class GitlabService {
 
     public static final int MAX_GROUPS_PER_PAGE = 20;
     public static final String RESPONSE_HEADER_NEXT_PAGE = "X-Next-Page";
+    public static final String GROUP_DESCENDANTS_VERSION = "13.5";
     private final GitlabClient client;
 
     public GitlabService(GitlabClient client) {
@@ -41,9 +42,22 @@ public class GitlabService {
         return Flowable.concat(projects, subGroups.flatMap(subGroup -> getGroupProjects(subGroup.getId())));
     }
 
-    private Flowable<GitlabGroup> getSubGroups(String groupId) {
-        log.trace("Retrieving group '{}' sub-groups", groupId);
+    protected Flowable<GitlabGroup> getSubGroups(String groupId) {
+        log.trace("Retrieving sub-groups of '{}'", groupId);
+        if (client.version().isBefore(GROUP_DESCENDANTS_VERSION)) {
+            return getSubGroupsRecursively(groupId);
+        } else {
+            return getDescendantGroups(groupId);
+        }
+    }
+
+    protected Flowable<GitlabGroup> getDescendantGroups(String groupId) {
         return paginatedApiCall(pageIndex -> client.groupDescendants(groupId, true, MAX_GROUPS_PER_PAGE, pageIndex));
+    }
+
+    protected Flowable<GitlabGroup> getSubGroupsRecursively(String groupId) {
+        final Flowable<GitlabGroup> subGroups = paginatedApiCall(pageIndex -> client.groupSubGroups(groupId, true, MAX_GROUPS_PER_PAGE, pageIndex));
+        return Flowable.concat(subGroups, subGroups.flatMap(group -> getSubGroupsRecursively(group.getId())));
     }
 
     private Flowable<GitlabProject> getGroupProjects(String groupId) {

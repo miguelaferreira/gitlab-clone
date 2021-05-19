@@ -1,11 +1,5 @@
 package gitlab.clone;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import javax.inject.Inject;
-import java.util.List;
-
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -14,6 +8,12 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.reactivex.Flowable;
 import org.junit.jupiter.api.Test;
+
+import javax.inject.Inject;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 @MicronautTest
@@ -29,7 +29,7 @@ class GitlabClientWithoutTokenTest {
     private GitlabClient client;
 
     @Test
-    void searchGroups_privateGroup() {
+    void searchGroups_privateGroup_withoutToken() {
         final Flowable<HttpResponse<List<GitlabGroup>>> groups = client.searchGroups(PRIVATE_GROUP_NAME, true, 10, 1);
 
         final Iterable<HttpResponse<List<GitlabGroup>>> iterable = groups.blockingIterable();
