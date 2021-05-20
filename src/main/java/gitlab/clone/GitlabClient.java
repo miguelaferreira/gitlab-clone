@@ -1,5 +1,9 @@
 package gitlab.clone;
 
+import static gitlab.clone.GitlabClient.H_PRIVATE_TOKEN;
+
+import java.util.List;
+
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Header;
@@ -8,10 +12,6 @@ import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.retry.annotation.Retryable;
 import io.reactivex.Flowable;
-
-import java.util.List;
-
-import static gitlab.clone.GitlabClient.H_PRIVATE_TOKEN;
 
 @Retryable
 @Client("${gitlab.url}/api/v4")
@@ -22,6 +22,14 @@ public interface GitlabClient {
     @Get("/groups{?search,per_page,all_available,page}")
     Flowable<HttpResponse<List<GitlabGroup>>> searchGroups(
             @QueryValue String search,
+            @QueryValue(value = "all_available") boolean allAvailable,
+            @QueryValue(value = "per_page") int perPage,
+            @QueryValue int page
+    );
+
+    @Get("/groups/{id}/subgroups{?all_available,per_page,page}")
+    Flowable<HttpResponse<List<GitlabGroup>>> groupSubGroups(
+            @PathVariable String id,
             @QueryValue(value = "all_available") boolean allAvailable,
             @QueryValue(value = "per_page") int perPage,
             @QueryValue int page

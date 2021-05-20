@@ -310,6 +310,12 @@
   "allDeclaredConstructors":true
 },
 {
+  "name":"gitlab.clone.GitlabVersion",
+  "allDeclaredFields":true,
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
   "name":"io.micronaut.aop.Interceptor[]"
 },
 {
@@ -522,6 +528,21 @@
 {
   "name":"io.micronaut.http.hateoas.$VndError$IntrospectionRef",
   "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"io.micronaut.http.hateoas.AbstractResource",
+  "allDeclaredFields":true,
+  "allDeclaredMethods":true
+},
+{
+  "name":"io.micronaut.http.hateoas.JsonError",
+  "allDeclaredFields":true,
+  "allDeclaredMethods":true,
+  "allDeclaredConstructors":true
+},
+{
+  "name":"io.micronaut.http.hateoas.Resource",
+  "allDeclaredMethods":true
 },
 {
   "name":"io.micronaut.http.netty.channel.$DefaultEventLoopGroupConfigurationDefinitionClass",

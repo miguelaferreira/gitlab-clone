@@ -17,6 +17,7 @@ module gitlab.clone {
     // requires org.eclipse.jgit.ssh.jsch;
     requires jsch;
     requires io.micronaut.core;
+    requires org.reactivestreams;
 
     exports gitlab.clone;
 }
