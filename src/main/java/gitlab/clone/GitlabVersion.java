@@ -39,4 +39,9 @@ public class GitlabVersion {
         }
         return VersionUtil.parseVersion(versionText, null, null);
     }
+
+    @Override
+    public String toString() {
+        return "v" + version + " at rev " + revision;
+    }
 }

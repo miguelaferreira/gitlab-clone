@@ -18,6 +18,8 @@ module gitlab.clone {
     requires jsch;
     requires io.micronaut.core;
     requires org.reactivestreams;
+    requires io.micronaut.picocli.picocli;
+    requires logback.core;
 
     exports gitlab.clone;
 }
