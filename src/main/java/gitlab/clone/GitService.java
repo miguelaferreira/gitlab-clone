@@ -103,6 +103,8 @@ public class GitService {
         }
         cloneCommand.setDirectory(new File(pathToClone));
         cloneCommand.setCloneSubmodules(cloneSubmodules);
+        cloneCommand.setCloneAllBranches(false);
+        cloneCommand.setNoTags();
 
         return cloneCommand.call();
     }

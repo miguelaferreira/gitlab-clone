@@ -158,13 +158,16 @@ public class GitlabCloneCommand implements Runnable {
         }
 
         final GitlabGroup group = maybeGroup.get();
-        final Flowable<GitlabProject> groupProjects = gitlabService.getGitlabGroupProjects(group);
-        final Flowable<Tuple2<GitlabProject, GitlabProject>> projectsZip = groupProjects.map(project -> Tuple.of(project, project));
-        final Flowable<Tuple2<GitlabProject, Either<String, Git>>> clonedProjects = projectsZip.map(
-                tuple1 -> tuple1.map2(
-                        project -> recurseSubmodules ? gitService.cloneOrInitSubmodulesProject(project, localPath) : gitService
-                                .cloneProject(project, localPath))
-        );
+        log.debug("Found group = {}", group);
+        final Flowable<Tuple2<GitlabProject, Either<String, Git>>> clonedProjects =
+                gitlabService.getGitlabGroupProjects(group)
+                             .map(project -> Tuple.of(project, project))
+                             .map(tuple -> tuple.map2(
+                                     project -> recurseSubmodules
+                                             ? gitService.cloneOrInitSubmodulesProject(project, localPath)
+                                             : gitService.cloneProject(project, localPath)
+                                     )
+                             );
 
         clonedProjects.blockingIterable()
                       .forEach(tuple -> {
