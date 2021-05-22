@@ -6,6 +6,7 @@ import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.retry.annotation.Retryable;
 import io.reactivex.Flowable;
 
@@ -14,7 +15,7 @@ import java.util.Optional;
 
 import static gitlab.clone.GitlabClient.H_PRIVATE_TOKEN;
 
-@Retryable
+@Retryable(excludes = HttpClientResponseException.class)
 @Client("${gitlab.url}/api/v4")
 @Header(name = H_PRIVATE_TOKEN, value = "${gitlab.token:}")
 public interface GitlabClient {
