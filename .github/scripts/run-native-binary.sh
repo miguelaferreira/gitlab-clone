@@ -15,11 +15,11 @@ build/native-image/application -h
 
 local_path="ssh-no-submodules"
 say "Asking to clone a group, via ssh, without submodules"
-build/native-image/application gitlab-clone-example -x "${local_path}"
+build/native-image/application -x gitlab-clone-example "${local_path}"
 [[ ! -f "${local_path}/gitlab-clone-example/a-project/some-project-sub-module/README.md" ]]
 
 say "Asking to clone the same group, via ssh, with submodules (effectively only initializing submodules)"
-build/native-image/application gitlab-clone-example -x -r "${local_path}"
+build/native-image/application -x -r gitlab-clone-example "${local_path}"
 [[ -f  "${local_path}/gitlab-clone-example/a-project/some-project-sub-module/README.md" ]]
 cd "${local_path}/gitlab-clone-example/a-project"
 [[ "$(git remote -v | head -n 1)" == *"git@"* ]]
@@ -27,7 +27,7 @@ cd -
 
 local_path="ssh-with-submodules"
 say "Asking to clone group, via ssh, with submodules"
-build/native-image/application gitlab-clone-example -x -r "${local_path}"
+build/native-image/application -x -r gitlab-clone-example "${local_path}"
 [[ -f  "${local_path}/gitlab-clone-example/a-project/some-project-sub-module/README.md" ]]
 cd "${local_path}/gitlab-clone-example/a-project"
 [[ "$(git remote -v | head -n 1)" == *"git@"* ]]
@@ -35,8 +35,22 @@ cd -
 
 local_path="https-with-submodules"
 say "Asking to clone group, via https, with submodules"
-build/native-image/application gitlab-clone-example -x -r -c HTTPS -u devex-bot "${local_path}"
+build/native-image/application -x -r -c HTTPS -u devex-bot gitlab-clone-example  "${local_path}"
 [[ -f  "${local_path}/gitlab-clone-example/a-project/some-project-sub-module/README.md" ]]
 cd "${local_path}/gitlab-clone-example/a-project"
 [[ "$(git remote -v | head -n 1)" == *"https://"* ]]
+cd -
+
+local_path="https-by-id"
+say "Asking to clone group by id"
+build/native-image/application -x -r -c HTTPS -u devex-bot -m id 11961707 "${local_path}"
+[[ -f  "${local_path}/gitlab-clone-example/a-project/some-project-sub-module/README.md" ]]
+cd "${local_path}/gitlab-clone-example/a-project"
+[[ "$(git remote -v | head -n 1)" == *"https://"* ]]
+cd -
+
+local_path="ssh-by-full-path"
+say "Asking to clone group by full path"
+build/native-image/application -x -m full_path gitlab-clone-example/sub-group-2/sub-group-3 "${local_path}"
+[[ -f  "${local_path}/gitlab-clone-example/sub-group-2/sub-group-3/another-project/README.md" ]]
 cd -
