@@ -30,6 +30,55 @@ For cloning public groups no token is needed, for private groups a token with sc
 GitLab's [Limiting scopes of a personal access token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html#limiting-scopes-of-a-personal-access-token)
 for more details on token scopes.
 
+### Public groups
+
+Cloning public groups does not require a gitlab token, however without a token it won't be possible to detect the version of GitLab server.
+That always results in an error message, and in defaulting to using the `group_descendants` API, which is not available in versions of GitLab pre `13.5`.
+
+**Cloning a public group by name, to the current directory, using SSH protocol**
+```bash
+gitlab-clone open-source-devex
+```
+**Cloning a public group by name, to the current directory, initializing git submodules, using SSH protocol**
+```bash
+gitlab-clone --recurse-submodules open-source-devex
+```
+**Cloning a group by name, to a specified location, using SSH protocol**
+```bash
+gitlab-clone open-source-devex ~/some-path-on-my-home
+```
+**Cloning a public group by id, to the current directory, using SSH protocol**
+```bash
+gitlab-clone --search-mode id 2150497
+```
+**Cloning a public group by path, to the current directory, using SSH protocol**
+```bash
+gitlab-clone --search-mode full_path open-source-devex/terraform-modules/aws
+```
+**Cloning a public group by name, to the current directory, using HTTPS protocol**
+```bash
+gitlab-clone --clone-protocol https open-source-devex
+```
+
+### Private groups and self-hosted GitLab servers
+
+Cloning private groups requires a gitlab token.
+Cloning from GitLab servers other than [gitlab.com](https://gitlab.com) requires the url for the server.
+
+**Cloning a private group by name, to the current directory, using SSH protocol**
+```bash
+GITLAB_TOKEN="..." gitlab-clone "some private group"
+```
+**Cloning a private group by name, to the current directory, using HTTPS protocol**
+```bash
+GITLAB_TOKEN="..." gitlab-clone --clone-protocol https --https-username miguelaferreira "some private group"
+```
+**Cloning a private group by name, to the current directory, using SSH protocol, from a self-hosted GitLab server**
+```bash
+GITLAB_URL="https://gitlab.acme.com" GITLAB_TOKEN="..." gitlab-clone "some private group"
+```
+
+### Full usage description
 ```
 $ gitlab-clone -h
 Usage:
@@ -38,13 +87,14 @@ Clone an entire GitLab group with all sub-groups and repositories.
 While cloning initialize project git sub-modules (may require two runs due to ordering of projects).
 When a project is already cloned, tries to initialize git sub-modules.
 
-gitlab-clone [-hrvVx] [--debug] [--trace] [-u[=<httpsUsername>]] [-c=<cloneProtocol>] GROUP PATH
+gitlab-clone [-hrvVx] [--debug] [--trace] [-u[=<httpsUsername>]] [-c=<cloneProtocol>] [-m=<searchMode>] GROUP PATH
 
 GitLab configuration:
 
 The GitLab URL and private token are read from the environment, using GITLAB_URL and GITLAB_TOKEN variables.
 GITLAB_URL defaults to 'https://gitlab.com'.
-The GitLab token is used for both querying the GitLab API and discover the group to clone and as the password for cloning using HTTPS.
+The GitLab token is used for both querying the GitLab API and discover the group to clone and as the password for
+cloning using HTTPS.
 No token is needed for public groups and repositories.
 
 Parameters:
@@ -54,15 +104,22 @@ Parameters:
 Options:
   -h, --help                 Show this help message and exit.
   -V, --version              Print version information and exit.
-  -r, --recurse-submodules   Initialize project submodules. If projects are already cloned try and initialize sub-modules anyway.
+  -r, --recurse-submodules   Initialize project submodules. If projects are already cloned try and initialize
+                               sub-modules anyway.
   -c, --clone-protocol=<cloneProtocol>
                              Chose the transport protocol used clone the project repositories. Valid values: SSH, HTTPS.
+  -m, --search-mode=<searchMode>
+                             Chose how the group is searched for. Groups can be searched by name or full path. Valid
+                               values: NAME, FULL_PATH, ID.
   -u, --https-username[=<httpsUsername>]
-                             The username to authenticate with when the HTTPS clone protocol is selected. This option is required when cloning private groups, in which case the GitLab token will be used as the password.
+                             The username to authenticate with when the HTTPS clone protocol is selected. This option
+                               is required when cloning private groups, in which case the GitLab token will be used as
+                               the password.
   -v, --verbose              Print out extra information about what the tool is doing.
   -x, --very-verbose         Print out even more information about what the tool is doing.
       --debug                Sets all loggers to DEBUG level.
-      --trace                Sets all loggers to TRACE level. WARNING: this setting will leak the GitLab token or password to the logs, use with caution.
+      --trace                Sets all loggers to TRACE level. WARNING: this setting will leak the GitLab token or
+                               password to the logs, use with caution.
 
 Copyright(c) 2021 - Miguel Ferreira - GitHub/GitLab: @miguelaferreira
 ```
