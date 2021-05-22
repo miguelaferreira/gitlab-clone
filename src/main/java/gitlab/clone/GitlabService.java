@@ -30,11 +30,11 @@ public class GitlabService {
         this.gitlabUrl = gitlabUrl;
     }
 
-    public Either<String, GitlabGroup> findGroupByName(String groupName) {
-        log.debug("Looking for group named: {}", groupName);
-        Function<Integer, Flowable<HttpResponse<List<GitlabGroup>>>> apiCall = pageIndex -> client.searchGroups(groupName, true, MAX_ELEMENTS_PER_PAGE, pageIndex);
+    public Either<String, GitlabGroup> findGroupBy(String search, GitlabGroupSearchMode by) {
+        log.debug("Looking for group {}: {}", by.textualQualifier(), search);
+        Function<Integer, Flowable<HttpResponse<List<GitlabGroup>>>> apiCall = pageIndex -> client.searchGroups(search, true, MAX_ELEMENTS_PER_PAGE, pageIndex);
         final Flowable<GitlabGroup> results = paginatedApiCall(apiCall);
-        return results.filter(gitlabGroup -> gitlabGroup.getName().equalsIgnoreCase(groupName))
+        return results.filter(gitlabGroup -> by.groupPredicate(search).test(gitlabGroup))
                       .map(Either::<String, GitlabGroup>right).blockingFirst(Either.left("Group not found"));
     }
 
@@ -70,12 +70,12 @@ public class GitlabService {
         } catch (HttpClientResponseException e) {
             final HttpStatus status = e.getStatus();
             if (status.equals(HttpStatus.UNAUTHORIZED)) {
-                log.trace("Could not detect GitLab server version without a valid token.");
+                log.debug("Could not detect GitLab server version without a valid token.");
             } else {
                 log.warn("Unexpected status {} checking GitLab version: {}, ", status.getCode(), status.getReason());
             }
         }
-        return Option.<GitlabVersion>none();
+        return Option.none();
     }
 
     protected Flowable<GitlabGroup> getDescendantGroups(String groupId) {

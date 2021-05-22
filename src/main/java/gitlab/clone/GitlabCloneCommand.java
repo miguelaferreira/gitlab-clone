@@ -3,7 +3,6 @@ package gitlab.clone;
 import ch.qos.logback.core.joran.spi.JoranException;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.context.env.Environment;
 import io.micronaut.logging.LogLevel;
 import io.micronaut.logging.LoggingSystem;
@@ -70,6 +69,14 @@ public class GitlabCloneCommand implements Runnable {
 
     @Option(
             order = 2,
+            names = {"-m", "--search-mode"},
+            description = "Chose how the group is searched for. Groups can be searched by name or full path. Valid values: ${COMPLETION-CANDIDATES}.",
+            defaultValue = "NAME"
+    )
+    private GitlabGroupSearchMode searchMode;
+
+    @Option(
+            order = 3,
             names = {"-u", "--https-username"},
             description = "The username to authenticate with when the HTTPS clone protocol is selected. This option is required when cloning private groups, in which case the GitLab token will be used as the password.",
             arity = "0..1",
@@ -128,12 +135,22 @@ public class GitlabCloneCommand implements Runnable {
     @Inject
     LoggingSystem loggingSystem;
 
-    public static void main(String[] args) {
-        final ApplicationContextBuilder builder = ApplicationContext.builder(GitlabCloneCommand.class, Environment.CLI);
-        try (ApplicationContext context = builder.start()) {
-            new CommandLine(GitlabCloneCommand.class, new MicronautFactory(context)).setCaseInsensitiveEnumValuesAllowed(true)
-                                                                                    .execute(args);
+    static int execute(String[] args) {
+        final ApplicationContext ctx = ApplicationContext.builder(GitlabCloneCommand.class, Environment.CLI).start();
+        return execute(ctx, args);
+    }
+
+    static int execute(ApplicationContext ctx, String[] args) {
+        try (ctx) {
+            return new CommandLine(GitlabCloneCommand.class, new MicronautFactory(ctx))
+                    .setCaseInsensitiveEnumValuesAllowed(true)
+                    .execute(args);
         }
+    }
+
+    public static void main(String[] args) {
+        int exitCode = execute(args);
+        System.exit(exitCode);
     }
 
     @Override
@@ -151,7 +168,7 @@ public class GitlabCloneCommand implements Runnable {
 
     private void cloneGroup() {
         log.info("Cloning group '{}'", gitlabGroupName);
-        final Either<String, GitlabGroup> maybeGroup = gitlabService.findGroupByName(gitlabGroupName);
+        final Either<String, GitlabGroup> maybeGroup = gitlabService.findGroupBy(gitlabGroupName, searchMode);
         if (maybeGroup.isLeft()) {
             log.info("Could not find group '{}': {}", gitlabGroupName, maybeGroup.getLeft());
             return;

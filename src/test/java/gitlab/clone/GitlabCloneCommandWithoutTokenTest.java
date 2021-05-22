@@ -1,15 +1,14 @@
 package gitlab.clone;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-
 import ch.qos.logback.core.joran.spi.JoranException;
-import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import org.assertj.core.api.AbstractStringAssert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 
 public class GitlabCloneCommandWithoutTokenTest extends GitlabCloneCommandBase {
 
@@ -30,10 +29,25 @@ public class GitlabCloneCommandWithoutTokenTest extends GitlabCloneCommandBase {
 
         try (ApplicationContext ctx = buildApplicationContext(NO_TOKEN_CONTEXT_PROPERTIES)) {
             String[] args = new String[]{"-v", "-r", PUBLIC_GROUP_NAME, cloneDirectory.toPath().toString()};
-            PicocliRunner.run(GitlabCloneCommand.class, ctx, args);
+            GitlabCloneCommand.execute(ctx, args);
 
-            assertLogsDebug(baos.toString(), PUBLIC_GROUP_NAME);
+            assertLogsDebug(baos.toString(), PUBLIC_GROUP_NAME)
+                    .contains(String.format("Looking for group named: %s", PUBLIC_GROUP_NAME));
             assertCloneContentsPublicGroup(cloneDirectory, true);
+        }
+    }
+
+    @Test
+    public void run_publicSubGroupByPath_withRecursion_verbose() {
+        ByteArrayOutputStream baos = redirectOutput();
+
+        try (ApplicationContext ctx = buildApplicationContext(NO_TOKEN_CONTEXT_PROPERTIES)) {
+            String[] args = new String[]{"-v", "-r", "-m", "full_path", PUBLIC_SUB_GROUP_FULL_PATH, cloneDirectory.toPath().toString()};
+            GitlabCloneCommand.execute(ctx, args);
+
+            assertLogsDebug(baos.toString(), PUBLIC_SUB_GROUP_FULL_PATH)
+                    .contains(String.format("Looking for group with full path: %s", PUBLIC_SUB_GROUP_FULL_PATH));
+            assertCloneContentsPublicSubGroup(cloneDirectory);
         }
     }
 
@@ -43,7 +57,7 @@ public class GitlabCloneCommandWithoutTokenTest extends GitlabCloneCommandBase {
 
         try (ApplicationContext ctx = buildApplicationContext(NO_TOKEN_CONTEXT_PROPERTIES)) {
             String[] args = new String[]{"-x", PRIVATE_GROUP_NAME, cloneDirectory.toPath().toString()};
-            PicocliRunner.run(GitlabCloneCommand.class, ctx, args);
+            GitlabCloneCommand.execute(ctx, args);
 
             final AbstractStringAssert<?> testAssert = assertLogsTrace(baos.toString(), PRIVATE_GROUP_NAME);
             assertLogsTraceWhenGroupNotFound(testAssert, PRIVATE_GROUP_NAME);

@@ -1,11 +1,5 @@
 package gitlab.clone;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import javax.inject.Inject;
-import java.util.List;
-
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -14,6 +8,12 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.reactivex.Flowable;
 import org.junit.jupiter.api.Test;
+
+import javax.inject.Inject;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 @MicronautTest
@@ -99,7 +99,10 @@ class GitlabClientWithoutTokenTest {
 
     @Test
     void getVersion() {
-        final HttpClientResponseException responseException = assertThrows(HttpClientResponseException.class, () -> client.version());
+        final HttpClientResponseException responseException = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.version()
+        );
 
         assertThat(responseException.getStatus().getCode()).isEqualTo(401);
     }

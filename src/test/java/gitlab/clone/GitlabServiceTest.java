@@ -15,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GitlabServiceTest {
 
     public static final String GITLAB_GROUP_NAME = "gitlab-clone-example";
+    public static final String GITLAB_GROUP_FULL_PATH = "gitlab-clone-example/sub-group-2/sub-group-3";
     public static final String GITLAB_GROUP_ID = "11961707";
 
     @Inject
@@ -22,10 +23,18 @@ class GitlabServiceTest {
 
     @Test
     void findGroupByName() {
-        final Either<String, GitlabGroup> maybeGroup = service.findGroupByName(GITLAB_GROUP_NAME);
+        final Either<String, GitlabGroup> maybeGroup = service.findGroupBy(GITLAB_GROUP_NAME, GitlabGroupSearchMode.NAME);
 
         VavrAssertions.assertThat(maybeGroup).isRight();
         Assertions.assertThat(maybeGroup.get().getName()).isEqualTo(GITLAB_GROUP_NAME);
+    }
+
+    @Test
+    void findGroupByFullPath() {
+        final Either<String, GitlabGroup> maybeGroup = service.findGroupBy(GITLAB_GROUP_FULL_PATH, GitlabGroupSearchMode.FULL_PATH);
+
+        VavrAssertions.assertThat(maybeGroup).isRight();
+        Assertions.assertThat(maybeGroup.get().getName()).isEqualTo("sub-group-3");
     }
 
     @Test
@@ -44,7 +53,7 @@ class GitlabServiceTest {
 
     @Test
     void getGitlabGroupProjects() {
-        final GitlabGroup group = service.findGroupByName(GITLAB_GROUP_NAME).get();
+        final GitlabGroup group = service.findGroupBy(GITLAB_GROUP_NAME, GitlabGroupSearchMode.NAME).get();
         final Flowable<GitlabProject> projects = service.getGitlabGroupProjects(group);
 
         assertThat(projects.blockingIterable()).hasSize(3);
