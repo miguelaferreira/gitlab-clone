@@ -33,7 +33,6 @@ public class GitlabService {
 
     public Either<String, GitlabGroup> findGroupBy(String search, GitlabGroupSearchMode by) {
         log.debug("Looking for group {}: {}", by.textualQualifier(), search);
-
         if (by == GitlabGroupSearchMode.ID) {
             return getGroup(search);
         } else {
@@ -57,9 +56,8 @@ public class GitlabService {
     public Flowable<GitlabProject> getGitlabGroupProjects(GitlabGroup group) {
         log.debug("Searching for projects in group '{}'", group.getFullPath());
         final String groupId = group.getId();
-        Flowable<GitlabProject> projects = getGroupProjects(groupId);
-        Flowable<GitlabGroup> subGroups = getSubGroups(groupId);
-
+        final Flowable<GitlabProject> projects = getGroupProjects(groupId);
+        final Flowable<GitlabGroup> subGroups = getSubGroups(groupId);
         return Flowable.mergeDelayError(projects, subGroups.flatMap(subGroup -> getGroupProjects(subGroup.getId())));
     }
 
@@ -100,7 +98,7 @@ public class GitlabService {
 
     protected Flowable<GitlabGroup> getSubGroupsRecursively(String groupId) {
         final Flowable<GitlabGroup> subGroups = paginatedApiCall(pageIndex -> client.groupSubGroups(groupId, true, MAX_ELEMENTS_PER_PAGE, pageIndex));
-        return Flowable.mergeDelayError(subGroups, subGroups.flatMap(group -> getSubGroupsRecursively(group.getId())));
+        return subGroups.flatMap(group -> Flowable.just(group).mergeWith(getSubGroupsRecursively(group.getId())));
     }
 
     private Flowable<GitlabProject> getGroupProjects(String groupId) {
@@ -120,19 +118,24 @@ public class GitlabService {
     private <T> Flowable<HttpResponse<T>> callPage(Function<Integer, Flowable<HttpResponse<T>>> apiCall, int pageIndex) {
         try {
             log.trace("Calling page {}", pageIndex);
-            final Flowable<HttpResponse<T>> page = apiCall.apply(pageIndex);
-            Flowable<HttpResponse<T>> nextPage = page.flatMap(response -> {
-                final String nextPageHeader = Objects.requireNonNullElse(response.getHeaders()
-                                                                                 .get(RESPONSE_HEADER_NEXT_PAGE), "0");
-                int nextPageIndex;
-                if (!nextPageHeader.isBlank() && (nextPageIndex = Integer.parseInt(nextPageHeader)) > 1) {
-                    log.trace("Next page is {}", nextPageIndex);
-                    return callPage(apiCall, nextPageIndex);
-                }
-                log.trace("No more pages");
-                return Flowable.empty();
-            });
-            return Flowable.mergeDelayError(page, nextPage);
+            return apiCall.apply(pageIndex)
+                          .flatMap(response -> {
+                              final String nextPageHeader =
+                                      Objects.requireNonNullElse(
+                                              response.getHeaders().get(RESPONSE_HEADER_NEXT_PAGE),
+                                              "0"
+                                      );
+                              int nextPageIndex;
+                              final Flowable<HttpResponse<T>> nextCall;
+                              if (!nextPageHeader.isBlank() && (nextPageIndex = Integer.parseInt(nextPageHeader)) > 1) {
+                                  log.trace("Next page is {}", nextPageIndex);
+                                  nextCall = callPage(apiCall, nextPageIndex);
+                              } else {
+                                  log.trace("No more pages");
+                                  nextCall = Flowable.empty();
+                              }
+                              return Flowable.just(response).mergeWith(nextCall);
+                          });
         } catch (HttpClientException e) {
             log.error("GitLab API call failed: {}", e.getMessage());
             return Flowable.empty();
