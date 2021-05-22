@@ -117,7 +117,7 @@ public class GitlabCloneCommand implements Runnable {
             paramLabel = "GROUP",
             description = "The GitLab group to clone."
     )
-    private String gitlabGroupName;
+    private String gitlabGroup;
 
     @CommandLine.Parameters(
             index = "1",
@@ -167,15 +167,17 @@ public class GitlabCloneCommand implements Runnable {
     }
 
     private void cloneGroup() {
-        log.info("Cloning group '{}'", gitlabGroupName);
-        final Either<String, GitlabGroup> maybeGroup = gitlabService.findGroupBy(gitlabGroupName, searchMode);
+        log.info("Cloning group '{}'", gitlabGroup);
+
+        final Either<String, GitlabGroup> maybeGroup = gitlabService.findGroupBy(gitlabGroup, searchMode);
         if (maybeGroup.isLeft()) {
-            log.info("Could not find group '{}': {}", gitlabGroupName, maybeGroup.getLeft());
+            log.info("Could not find group '{}': {}", gitlabGroup, maybeGroup.getLeft());
             return;
         }
 
         final GitlabGroup group = maybeGroup.get();
         log.debug("Found group = {}", group);
+
         final Flowable<Tuple2<GitlabProject, Either<Throwable, Git>>> clonedProjects =
                 gitlabService.getGitlabGroupProjects(group)
                              .map(project -> Tuple.of(project, project))

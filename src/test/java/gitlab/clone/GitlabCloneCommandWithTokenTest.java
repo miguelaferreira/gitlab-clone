@@ -35,7 +35,7 @@ public class GitlabCloneCommandWithTokenTest extends GitlabCloneCommandBase {
             String[] args = new String[]{"-v", PUBLIC_GROUP_NAME, cloneDirectory.toPath().toString()};
             GitlabCloneCommand.execute(ctx, args);
 
-            assertLogsDebug(baos.toString(), PUBLIC_GROUP_NAME)
+            assertLogsDebug(baos.toString(), PUBLIC_GROUP_NAME, PUBLIC_GROUP_NAME)
                     .contains(String.format("Looking for group named: %s", PUBLIC_GROUP_NAME));
             assertCloneContentsPublicGroup(cloneDirectory, false);
             final Path submodulePath = Path.of(cloneDirectory.getAbsolutePath(), "gitlab-clone-example", "a-project", "some-project-sub-module");

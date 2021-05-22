@@ -22,6 +22,7 @@ public class GitlabService {
     public static final int MAX_ELEMENTS_PER_PAGE = 10;
     public static final String RESPONSE_HEADER_NEXT_PAGE = "X-Next-Page";
     public static final String GROUP_DESCENDANTS_VERSION = "13.5";
+    public static final String GROUP_NOT_FOUND = "Group not found";
     private final GitlabClient client;
     private final String gitlabUrl;
 
@@ -32,10 +33,25 @@ public class GitlabService {
 
     public Either<String, GitlabGroup> findGroupBy(String search, GitlabGroupSearchMode by) {
         log.debug("Looking for group {}: {}", by.textualQualifier(), search);
-        Function<Integer, Flowable<HttpResponse<List<GitlabGroup>>>> apiCall = pageIndex -> client.searchGroups(search, true, MAX_ELEMENTS_PER_PAGE, pageIndex);
-        final Flowable<GitlabGroup> results = paginatedApiCall(apiCall);
-        return results.filter(gitlabGroup -> by.groupPredicate(search).test(gitlabGroup))
-                      .map(Either::<String, GitlabGroup>right).blockingFirst(Either.left("Group not found"));
+
+        if (by == GitlabGroupSearchMode.ID) {
+            return getGroup(search);
+        } else {
+            Function<Integer, Flowable<HttpResponse<List<GitlabGroup>>>> apiCall = pageIndex -> client.searchGroups(search, true, MAX_ELEMENTS_PER_PAGE, pageIndex);
+            final Flowable<GitlabGroup> results = paginatedApiCall(apiCall);
+            return results.filter(gitlabGroup -> by.groupPredicate(search).test(gitlabGroup))
+                          .map(Either::<String, GitlabGroup>right).blockingFirst(Either.left(GROUP_NOT_FOUND));
+        }
+    }
+
+    public Either<String, GitlabGroup> getGroup(String id) {
+        try {
+            return Option.ofOptional(client.getGroup(id)).toEither(GROUP_NOT_FOUND);
+        } catch (HttpClientResponseException e) {
+            final HttpStatus status = e.getStatus();
+            log.warn("Unexpected status {} fetching GitLab group {}: {}, ", status.getCode(), id, status.getReason());
+            return Either.left(e.getMessage());
+        }
     }
 
     public Flowable<GitlabProject> getGitlabGroupProjects(GitlabGroup group) {

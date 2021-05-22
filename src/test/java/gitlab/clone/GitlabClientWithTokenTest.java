@@ -1,15 +1,16 @@
 package gitlab.clone;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import javax.inject.Inject;
-import java.util.List;
-
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.reactivex.Flowable;
 import org.junit.jupiter.api.Test;
+
+import javax.inject.Inject;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
 class GitlabClientWithTokenTest {
@@ -33,6 +34,15 @@ class GitlabClientWithTokenTest {
         assertThat(response.getBody()).isNotEmpty();
         assertThat(response.getBody().get()).hasSize(2)
                                             .allSatisfy(group -> assertThat(group.getFullPath()).contains(PRIVATE_GROUP_NAME));
+    }
+
+    @Test
+    void getGroup_privateGroup_withoutToken() {
+        final Optional<GitlabGroup> maybeGroup = client.getGroup(PRIVATE_GROUP_ID);
+
+        assertThat(maybeGroup).isNotEmpty();
+        assertThat(maybeGroup.get().getId()).isEqualTo(PRIVATE_GROUP_ID);
+        assertThat(maybeGroup.get().getName()).isEqualTo(PRIVATE_GROUP_NAME);
     }
 
     @Test

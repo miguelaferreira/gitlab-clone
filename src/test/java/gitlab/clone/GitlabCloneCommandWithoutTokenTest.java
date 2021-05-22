@@ -31,7 +31,7 @@ public class GitlabCloneCommandWithoutTokenTest extends GitlabCloneCommandBase {
             String[] args = new String[]{"-v", "-r", PUBLIC_GROUP_NAME, cloneDirectory.toPath().toString()};
             GitlabCloneCommand.execute(ctx, args);
 
-            assertLogsDebug(baos.toString(), PUBLIC_GROUP_NAME)
+            assertLogsDebug(baos.toString(), PUBLIC_GROUP_NAME, PUBLIC_GROUP_NAME)
                     .contains(String.format("Looking for group named: %s", PUBLIC_GROUP_NAME));
             assertCloneContentsPublicGroup(cloneDirectory, true);
         }
@@ -45,9 +45,23 @@ public class GitlabCloneCommandWithoutTokenTest extends GitlabCloneCommandBase {
             String[] args = new String[]{"-v", "-r", "-m", "full_path", PUBLIC_SUB_GROUP_FULL_PATH, cloneDirectory.toPath().toString()};
             GitlabCloneCommand.execute(ctx, args);
 
-            assertLogsDebug(baos.toString(), PUBLIC_SUB_GROUP_FULL_PATH)
+            assertLogsDebug(baos.toString(), PUBLIC_SUB_GROUP_FULL_PATH, PUBLIC_SUB_GROUP_FULL_PATH)
                     .contains(String.format("Looking for group with full path: %s", PUBLIC_SUB_GROUP_FULL_PATH));
             assertCloneContentsPublicSubGroup(cloneDirectory);
+        }
+    }
+
+    @Test
+    public void run_publicGroupById_withRecursion_verbose() {
+        ByteArrayOutputStream baos = redirectOutput();
+
+        try (ApplicationContext ctx = buildApplicationContext(NO_TOKEN_CONTEXT_PROPERTIES)) {
+            String[] args = new String[]{"-v", "-r", "-m", "id", PUBLIC_GROUP_ID, cloneDirectory.toPath().toString()};
+            GitlabCloneCommand.execute(ctx, args);
+
+            assertLogsDebug(baos.toString(), PUBLIC_GROUP_ID, PUBLIC_GROUP_NAME)
+                    .contains(String.format("Looking for group identified by: %s", PUBLIC_GROUP_ID));
+            assertCloneContentsPublicGroup(cloneDirectory, true);
         }
     }
 

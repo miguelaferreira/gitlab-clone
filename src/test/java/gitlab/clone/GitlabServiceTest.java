@@ -22,6 +22,14 @@ class GitlabServiceTest {
     private GitlabService service;
 
     @Test
+    void findGroupById() {
+        final Either<String, GitlabGroup> maybeGroup = service.findGroupBy(GITLAB_GROUP_ID, GitlabGroupSearchMode.ID);
+
+        VavrAssertions.assertThat(maybeGroup).isRight();
+        Assertions.assertThat(maybeGroup.get().getName()).isEqualTo(GITLAB_GROUP_NAME);
+    }
+
+    @Test
     void findGroupByName() {
         final Either<String, GitlabGroup> maybeGroup = service.findGroupBy(GITLAB_GROUP_NAME, GitlabGroupSearchMode.NAME);
 

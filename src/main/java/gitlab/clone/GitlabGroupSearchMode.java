@@ -3,7 +3,7 @@ package gitlab.clone;
 import java.util.function.Predicate;
 
 public enum GitlabGroupSearchMode {
-    NAME, FULL_PATH;
+    NAME, FULL_PATH, ID;
 
     public String textualQualifier() {
         switch (this) {
@@ -11,6 +11,8 @@ public enum GitlabGroupSearchMode {
                 return "named";
             case FULL_PATH:
                 return "with full path";
+            case ID:
+                return "identified by";
         }
         throw new IllegalArgumentException("There is no qualifier defined for " + this);
     }
@@ -21,6 +23,8 @@ public enum GitlabGroupSearchMode {
                 return group -> group.getName().equalsIgnoreCase(search);
             case FULL_PATH:
                 return group -> group.getFullPath().equalsIgnoreCase(search);
+            case ID:
+                return group -> group.getId().equalsIgnoreCase(search);
         }
         throw new IllegalArgumentException("There is no predicate defined for " + this);
     }

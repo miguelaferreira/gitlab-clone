@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class GitlabCloneCommandBase {
 
     public static final String PUBLIC_GROUP_NAME = "gitlab-clone-example";
+    public static final String PUBLIC_GROUP_ID = "11961707";
     public static final String PRIVATE_GROUP_NAME = "gitlab-clone-example-private";
     public static final int TEST_OUTPUT_ARRAY_SIZE = 4096000;
     public static final Map<String, Object> NO_TOKEN_CONTEXT_PROPERTIES = Map.of("gitlab.token", "");
@@ -54,10 +55,10 @@ public class GitlabCloneCommandBase {
                           .contains("PRIVATE-TOKEN");
     }
 
-    public AbstractStringAssert<?> assertLogsDebug(String output, String groupName) {
+    public AbstractStringAssert<?> assertLogsDebug(String output, String group, String groupPath) {
         return assertThat(output).contains("Set application loggers to DEBUG")
-                                 .contains(String.format("Cloning group '%s'", groupName))
-                                 .contains(String.format("Searching for projects in group '%s'", groupName))
+                                 .contains(String.format("Cloning group '%s'", group))
+                                 .contains(String.format("Searching for projects in group '%s'", groupPath))
                                  .contains("All done")
                                  .doesNotContain("PRIVATE-TOKEN")
                                  .doesNotContain("gitlab.clone.GitlabCloneCommand");

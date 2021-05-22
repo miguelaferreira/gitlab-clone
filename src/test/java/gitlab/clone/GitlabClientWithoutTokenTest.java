@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -41,6 +42,13 @@ class GitlabClientWithoutTokenTest {
     }
 
     @Test
+    void getGroup_privateGroup_withoutToken() {
+        final Optional<GitlabGroup> maybeGroup = client.getGroup(PRIVATE_GROUP_ID);
+
+        assertThat(maybeGroup).isEmpty();
+    }
+
+    @Test
     void searchGroups_publicGroup() {
         final Flowable<HttpResponse<List<GitlabGroup>>> groups = client.searchGroups(PUBLIC_GROUP_NAME, true, 10, 1);
 
@@ -51,6 +59,15 @@ class GitlabClientWithoutTokenTest {
         assertThat(response.getBody()).isNotEmpty();
         assertThat(response.getBody().get()).hasSize(4)
                                             .allSatisfy(group -> assertThat(group.getFullPath()).contains(PUBLIC_GROUP_NAME));
+    }
+
+    @Test
+    void getGroup_publicGroup_withoutToken() {
+        final Optional<GitlabGroup> maybeGroup = client.getGroup(PUBLIC_GROUP_ID);
+
+        assertThat(maybeGroup).isNotEmpty();
+        assertThat(maybeGroup.get().getId()).isEqualTo(PUBLIC_GROUP_ID);
+        assertThat(maybeGroup.get().getName()).isEqualTo(PUBLIC_GROUP_NAME);
     }
 
     @Test
