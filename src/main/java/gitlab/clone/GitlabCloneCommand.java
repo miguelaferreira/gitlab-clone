@@ -3,7 +3,6 @@ package gitlab.clone;
 import ch.qos.logback.core.joran.spi.JoranException;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.context.env.Environment;
 import io.micronaut.logging.LogLevel;
 import io.micronaut.logging.LoggingSystem;
@@ -70,6 +69,14 @@ public class GitlabCloneCommand implements Runnable {
 
     @Option(
             order = 2,
+            names = {"-m", "--search-mode"},
+            description = "Chose how the group is searched for. Groups can be searched by name or full path. Valid values: ${COMPLETION-CANDIDATES}.",
+            defaultValue = "NAME"
+    )
+    private GitlabGroupSearchMode searchMode;
+
+    @Option(
+            order = 3,
             names = {"-u", "--https-username"},
             description = "The username to authenticate with when the HTTPS clone protocol is selected. This option is required when cloning private groups, in which case the GitLab token will be used as the password.",
             arity = "0..1",
@@ -110,7 +117,7 @@ public class GitlabCloneCommand implements Runnable {
             paramLabel = "GROUP",
             description = "The GitLab group to clone."
     )
-    private String gitlabGroupName;
+    private String gitlabGroup;
 
     @CommandLine.Parameters(
             index = "1",
@@ -128,12 +135,22 @@ public class GitlabCloneCommand implements Runnable {
     @Inject
     LoggingSystem loggingSystem;
 
-    public static void main(String[] args) {
-        final ApplicationContextBuilder builder = ApplicationContext.builder(GitlabCloneCommand.class, Environment.CLI);
-        try (ApplicationContext context = builder.start()) {
-            new CommandLine(GitlabCloneCommand.class, new MicronautFactory(context)).setCaseInsensitiveEnumValuesAllowed(true)
-                                                                                    .execute(args);
+    static int execute(String[] args) {
+        final ApplicationContext ctx = ApplicationContext.builder(GitlabCloneCommand.class, Environment.CLI).start();
+        return execute(ctx, args);
+    }
+
+    static int execute(ApplicationContext ctx, String[] args) {
+        try (ctx) {
+            return new CommandLine(GitlabCloneCommand.class, new MicronautFactory(ctx))
+                    .setCaseInsensitiveEnumValuesAllowed(true)
+                    .execute(args);
         }
+    }
+
+    public static void main(String[] args) {
+        int exitCode = execute(args);
+        System.exit(exitCode);
     }
 
     @Override
@@ -150,16 +167,18 @@ public class GitlabCloneCommand implements Runnable {
     }
 
     private void cloneGroup() {
-        log.info("Cloning group '{}'", gitlabGroupName);
-        final Either<String, GitlabGroup> maybeGroup = gitlabService.findGroupByName(gitlabGroupName);
+        log.info("Cloning group '{}'", gitlabGroup);
+
+        final Either<String, GitlabGroup> maybeGroup = gitlabService.findGroupBy(gitlabGroup, searchMode);
         if (maybeGroup.isLeft()) {
-            log.info("Could not find group '{}': {}", gitlabGroupName, maybeGroup.getLeft());
+            log.info("Could not find group '{}': {}", gitlabGroup, maybeGroup.getLeft());
             return;
         }
 
         final GitlabGroup group = maybeGroup.get();
         log.debug("Found group = {}", group);
-        final Flowable<Tuple2<GitlabProject, Either<String, Git>>> clonedProjects =
+
+        final Flowable<Tuple2<GitlabProject, Either<Throwable, Git>>> clonedProjects =
                 gitlabService.getGitlabGroupProjects(group)
                              .map(project -> Tuple.of(project, project))
                              .map(tuple -> tuple.map2(
@@ -172,9 +191,9 @@ public class GitlabCloneCommand implements Runnable {
         clonedProjects.blockingIterable()
                       .forEach(tuple -> {
                           final GitlabProject project = tuple._1;
-                          final Either<String, Git> gitRepoOrError = tuple._2;
+                          final Either<Throwable, Git> gitRepoOrError = tuple._2;
                           if (gitRepoOrError.isLeft()) {
-                              log.warn(gitRepoOrError.getLeft());
+                              log.warn("Git operation failed", gitRepoOrError.getLeft());
                           } else {
                               log.info("Project '{}' updated.", project.getNameWithNamespace());
                           }

@@ -40,29 +40,31 @@ public class GitService {
         this.httpsPassword = httpsPassword;
     }
 
-    public Either<String, Git> cloneOrInitSubmodulesProject(GitlabProject project, String cloneDirectory) {
+    public Either<Throwable, Git> cloneOrInitSubmodulesProject(GitlabProject project, String cloneDirectory) {
         final String projectName = project.getNameWithNamespace();
         log.trace("Cloning or initializing submodules for project '{}' under directory '{}'", projectName, cloneDirectory);
         return tryCloneProject(project, cloneDirectory, projectName, true)
-                .recoverWith(t -> Try.of(() -> initSubmodules(project, cloneDirectory)))
-                .onSuccess(gitRepo -> log.trace("Initialized submodules of git repository at '{}'", getDirectory(gitRepo)))
-                .onFailure(t -> logFailedSubmoduleInit(projectName, t))
-                .toEither()
-                .mapLeft(t -> String.format("Could not clone nor initialize project submodules for project '%s'.", projectName));
+                .recoverWith(t -> tryInitSubmodules(project, cloneDirectory))
+                .toEither();
     }
 
-    public Either<String, Git> cloneProject(final GitlabProject project, final String cloneDirectory) {
+    public Either<Throwable, Git> cloneProject(final GitlabProject project, final String cloneDirectory) {
         final String projectName = project.getNameWithNamespace();
         log.trace("Cloning project '{}' under directory '{}'", projectName, cloneDirectory);
         return tryCloneProject(project, cloneDirectory, projectName, false)
-                .toEither()
-                .mapLeft(t -> String.format("Could not clone project '%s'.", projectName));
+                .toEither();
     }
 
     private Try<Git> tryCloneProject(final GitlabProject project, final String cloneDirectory, final String projectName, final boolean cloneSubmodules) {
         return Try.of(() -> cloneProject(project, cloneDirectory, cloneSubmodules))
                   .onSuccess(gitRepo -> log.trace("Cloned project '{}' to '{}'", projectName, getDirectory(gitRepo)))
                   .onFailure(t -> logFailedClone(projectName, t));
+    }
+
+    private Try<Git> tryInitSubmodules(GitlabProject project, String cloneDirectory) {
+        return Try.of(() -> initSubmodules(project, cloneDirectory))
+                  .onSuccess(gitRepo -> log.trace("Initialized submodules of git repository at '{}'", getDirectory(gitRepo)))
+                  .onFailure(t2 -> logFailedSubmoduleInit(project.getName(), t2));
     }
 
     protected Git openRepository(GitlabProject project, String cloneDirectory) throws IOException {

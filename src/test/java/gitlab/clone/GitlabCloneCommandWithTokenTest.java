@@ -1,19 +1,18 @@
 package gitlab.clone;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import ch.qos.logback.core.joran.spi.JoranException;
+import io.micronaut.context.ApplicationContext;
+import org.assertj.core.api.AbstractStringAssert;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Path;
 
-import ch.qos.logback.core.joran.spi.JoranException;
-import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.context.ApplicationContext;
-import org.assertj.core.api.AbstractStringAssert;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class GitlabCloneCommandWithTokenTest extends GitlabCloneCommandBase {
 
@@ -34,9 +33,10 @@ public class GitlabCloneCommandWithTokenTest extends GitlabCloneCommandBase {
 
         try (ApplicationContext ctx = buildApplicationContext()) {
             String[] args = new String[]{"-v", PUBLIC_GROUP_NAME, cloneDirectory.toPath().toString()};
-            PicocliRunner.run(GitlabCloneCommand.class, ctx, args);
+            GitlabCloneCommand.execute(ctx, args);
 
-            assertLogsDebug(baos.toString(), PUBLIC_GROUP_NAME);
+            assertLogsDebug(baos.toString(), PUBLIC_GROUP_NAME, PUBLIC_GROUP_NAME)
+                    .contains(String.format("Looking for group named: %s", PUBLIC_GROUP_NAME));
             assertCloneContentsPublicGroup(cloneDirectory, false);
             final Path submodulePath = Path.of(cloneDirectory.getAbsolutePath(), "gitlab-clone-example", "a-project", "some-project-sub-module");
             assertThat(submodulePath).isEmptyDirectory();
@@ -49,7 +49,7 @@ public class GitlabCloneCommandWithTokenTest extends GitlabCloneCommandBase {
 
         try (ApplicationContext ctx = buildApplicationContext()) {
             String[] args = new String[]{"-x", PRIVATE_GROUP_NAME, cloneDirectory.toPath().toString()};
-            PicocliRunner.run(GitlabCloneCommand.class, ctx, args);
+            GitlabCloneCommand.execute(ctx, args);
 
             final AbstractStringAssert<?> testAssert = assertLogsTrace(baos.toString(), PRIVATE_GROUP_NAME);
             assertLogsTraceWhenGroupFound(testAssert, PRIVATE_GROUP_NAME);
@@ -64,7 +64,7 @@ public class GitlabCloneCommandWithTokenTest extends GitlabCloneCommandBase {
 
         try (ApplicationContext ctx = buildApplicationContext()) {
             String[] args = new String[]{"-x", "-r", PUBLIC_GROUP_NAME, cloneDirectory.toPath().toString()};
-            PicocliRunner.run(GitlabCloneCommand.class, ctx, args);
+            GitlabCloneCommand.execute(ctx, args);
 
             final AbstractStringAssert<?> testAssert = assertLogsTrace(baos.toString(), PUBLIC_GROUP_NAME);
             assertLogsTraceWhenGroupFound(testAssert, PUBLIC_GROUP_NAME);

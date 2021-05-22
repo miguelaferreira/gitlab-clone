@@ -55,3 +55,11 @@ cmd "${native_image_config_dir}/${local_path}" -x -r gitlab-clone-example-privat
 local_path="${test_clones_dir}/public-with-token-https-with-submodules-very-verbose"
 say "Asking to clone a private group using a token, via https, with submodules"
 cmd "${native_image_config_dir}/${local_path}" -x -r -c HTTPS -u devex-bot gitlab-clone-example-private "${local_path}"
+
+local_path="${test_clones_dir}/public-by-id-with-token-very-verbose"
+say "Asking to clone a public group by id using a token, via https, with submodules"
+cmd "${native_image_config_dir}/${local_path}" -x -m id -r -c HTTPS -u devex-bot 11961707 "${local_path}"
+
+local_path="${test_clones_dir}/public-sub-group-by-full-path-with-token-very-verbose"
+say "Asking to clone a public subgroup by full path using a token, via https, with submodules"
+cmd "${native_image_config_dir}/${local_path}" -x -m full_path -r -c HTTPS -u devex-bot gitlab-clone-example/sub-group-2/sub-group-3 "${local_path}"

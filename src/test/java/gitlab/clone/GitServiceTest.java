@@ -139,7 +139,7 @@ class GitServiceTest {
                              .build()
         );
 
-        final Stream<Either<String, Git>> result = flowableToStream(projects.map(project -> gitService.cloneProject(project, cloneDirectoryPath)));
+        final Stream<Either<Throwable, Git>> result = flowableToStream(projects.map(project -> gitService.cloneProject(project, cloneDirectoryPath)));
         final List<Git> gits = result.filter(Either::isRight).map(Either::get).toJavaList();
 
         assertThat(gits).hasSize(3);
@@ -178,8 +178,8 @@ class GitServiceTest {
                                                           .allSatisfy(this::submoduleIsInitialized);
 
         // clone entire group
-        final Stream<Either<String, Git>> result = flowableToStream(projects.map(project -> gitService.cloneOrInitSubmodulesProject(project, cloneDirectoryPath)));
-        final List<String> errors = result.filter(Either::isLeft).map(Either::getLeft).toJavaList();
+        final Stream<Either<Throwable, Git>> result = flowableToStream(projects.map(project -> gitService.cloneOrInitSubmodulesProject(project, cloneDirectoryPath)));
+        final List<Throwable> errors = result.filter(Either::isLeft).map(Either::getLeft).toJavaList();
         final List<Git> gits = result.filter(Either::isRight).map(Either::get).toJavaList();
         final java.util.stream.Stream<Map<String, SubmoduleStatus>> submoduleStatus = gits.stream().map(git -> {
             try {
@@ -226,8 +226,8 @@ class GitServiceTest {
                                                           .allSatisfy(this::submoduleIsUninitialized);
 
         // clone entire group
-        final Stream<Either<String, Git>> result = flowableToStream(projects.map(project -> gitService.cloneOrInitSubmodulesProject(project, cloneDirectoryPath)));
-        final List<String> errors = result.filter(Either::isLeft).map(Either::getLeft).toJavaList();
+        final Stream<Either<Throwable, Git>> result = flowableToStream(projects.map(project -> gitService.cloneOrInitSubmodulesProject(project, cloneDirectoryPath)));
+        final List<Throwable> errors = result.filter(Either::isLeft).map(Either::getLeft).toJavaList();
         final List<Git> gits = result.filter(Either::isRight).map(Either::get).toJavaList();
         final java.util.stream.Stream<Map<String, SubmoduleStatus>> submoduleStatus = gits.stream().map(git -> {
             try {
